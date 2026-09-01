@@ -36,6 +36,30 @@ This run is fully unattended (no one will see prompts or answer questions) — n
    h. Commit all changed files — including the newly downloaded `.xls`/`.pdf` source files from step 5a, which are new untracked files and need an explicit `git add` (e.g. "Auto-update: CBS release {number} ({date})") — and push to `main`.
 6. Failure path (unreachable/undiscoverable source, unparseable table, or validation mismatch in 5c): do NOT modify housing_construction_dashboard.html or data/last_release.json. Create/update `STATUS.md` at repo root describing exactly what was tried and what failed (search queries used, candidate URLs tried, any errors) so the owner can investigate manually. Commit and push just that file ("Auto-update check failed: see STATUS.md").
 
+## SECOND SERIES — מלאי קבלנים (contractor stock), the "מלאי קבלנים" tab
+
+The dashboard also has a tab fed by a COMPLETELY DIFFERENT CBS release. Check it on every run, independently of steps 3-6 above — one series being up to date says nothing about the other.
+
+- **Release series**: "דירות בעסקאות נדל"ן" (Real Estate Transactions — Dwellings). Published **monthly**, mid-month (observed: release 077/2026 on 21 Mar 2026, 147/2026 on 14 May 2026). Each release covers a rolling 3-month window, but the DATA TABLE inside is monthly and cumulative from 2024-01, so you always take the whole table and replace `STOCK_DATA` wholesale rather than appending.
+- **The file you want is table 2**: `https://www.cbs.gov.il/he/mediarelease/DocLib/{year}/{n}/04_{yy}_{n}t2.xls` — titled `לוח 2. דירות חדשות שנותרו למכירה וחודשי היצע`. Confirm that title before parsing — t2 means something different in the other series.
+- **Current state** is recorded in `data/last_release.json` under `stock_series`. Compare by published date, not by release number.
+- **Exact column layout of that sheet** (verified 2026-09-01 on 04_26_147t2.xls, 8 columns):
+  | col | meaning |
+  |---|---|
+  | 0 | חודשי היצע (months of supply) |
+  | 1 | % change on previous month, **of the trend series** |
+  | 2 | מגמה / trend |
+  | 3 | מנוכי עונתיות / seasonally adjusted |
+  | 4 | נתונים מקוריים / original |
+  | 6 | month number |
+  | 7 | year — **present only on January rows**, carry it forward for the rest |
+  Data rows start at row 10. Read it with `xlrd` (it is a legacy .xls; `openpyxl` will not open it).
+- **Validation before writing anything**: recompute each row's % change from the trend column and confirm it matches column 1 within 0.15pp. On 04_26_147t2.xls all 26 comparisons matched exactly. If they do not match, the column order changed — STOP and use the step-6 failure path.
+- **Then update** the `STOCK_DATA` object in `housing_construction_dashboard.html` (keys: `source`, `labels` as "MM/YY", `original`, `sa`, `trend`, `pctTrend`, `monthsSupply` — all arrays of equal length), and update `stock_series` in `data/last_release.json`.
+
+### ⚠ Do NOT brute-force release numbers on cbs.gov.il
+Finding this series' current release number by scanning `04_26_{n}t2.xls` over a range **got this machine rate-limited/blocked by CBS on 2026-09-01** after roughly 90 requests — every subsequent request failed with `Recv failure: Connection was reset` for a considerable time, which would break the daily run entirely. Discover the number with WebSearch instead. If you truly must scan, cap it at ~15 requests with >=2s between them, and abort the whole scan on the first connection reset.
+
 ## Ground rules
 - Never invent or estimate data — if a number can't be verified against the source, leave it out and fail loudly via STATUS.md instead.
 - Keep the dashboard a single self-contained HTML file.

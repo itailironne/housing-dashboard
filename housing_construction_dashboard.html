@@ -395,6 +395,7 @@ window.Chart = Chart;
 <div class="tabs">
   <button class="tab-btn active" data-tab="dashboard">📊 לוח הנתונים</button>
   <button class="tab-btn" data-tab="cities">🏙️ לפי יישוב</button>
+  <button class="tab-btn" data-tab="stock">🏗️ מלאי קבלנים</button>
   <button class="tab-btn" data-tab="help">🔄 איך לעדכן נתונים</button>
 </div>
 
@@ -501,6 +502,57 @@ window.Chart = Chart;
     </table>
     <p class="table-caption">לחיצה על כותרת עמודה ממיינת את הטבלה לפיה (שורת "סך הכל ארצי" תמיד נשארת קבועה למעלה). תא עם "—" משמעו שהערך לא דווח במקור עבור אותה תקופה (מתחת לסף הדיווח), ולכן גם לא ניתן לחשב עבורו אחוז שינוי.</p>
     </div>
+  </div>
+
+</div>
+
+<div class="wrap tab-panel" id="tab-stock" style="display:none;">
+
+  <p class="intro">
+    <strong>מלאי קבלנים</strong> — דירות חדשות שנותרו למכירה בסוף כל חודש, ומספר חודשי ההיצע
+    (כמה חודשי מכירות דרושים כדי למכור את כל המלאי, לפי קצב המכירות הנוכחי).
+    בניגוד לשאר הטאבים בדשבורד, שמבוססים על הודעת <em>"התחלות וגמר בנייה"</em> הרבעונית,
+    הנתון הזה מגיע מהודעה אחרת של הלמ"ס — <em>"דירות בעסקאות נדל"ן"</em> — שמתפרסמת
+    <strong>מדי חודש</strong>. לכן כאן הציר הוא חודשי ולא רבעוני.
+  </p>
+
+  <div id="stockSummaryGrid" class="summary-grid"></div>
+
+  <div class="chart-card">
+    <h2><span class="dot" style="background:var(--accent1)"></span>מלאי דירות חדשות שנותרו למכירה</h2>
+    <p class="desc">
+      נתונים חודשיים. הקו הכחול הוא הנתון המקורי; הקו הכתום המקווקו הוא המגמה שמפרסמת הלמ"ס,
+      שמנטרלת רעש עונתי וחד-פעמי. שניהם באותה יחידה (מספר דירות), ולכן על אותו ציר.
+    </p>
+    <div class="chart-holder"><canvas id="chart_stock"></canvas></div>
+  </div>
+
+  <div class="chart-card">
+    <h2><span class="dot" style="background:var(--accent1)"></span>חודשי היצע</h2>
+    <p class="desc">
+      כמה חודשים ייקח למכור את כל המלאי בקצב המכירות של אותו חודש. זו יחידה אחרת לגמרי
+      (חודשים, לא דירות), ולכן היא בגרף נפרד ולא על ציר שני — שני צירים באותו גרף מעוותים
+      את הקריאה.
+    </p>
+    <div class="chart-holder"><canvas id="chart_supply"></canvas></div>
+  </div>
+
+  <div class="table-section">
+    <h2>נתונים חודשיים מלאים</h2>
+    <table id="stockTable">
+      <thead>
+        <tr>
+          <th>חודש</th>
+          <th>מלאי (מקורי)</th>
+          <th>מנוכה עונתיות</th>
+          <th>מגמה</th>
+          <th>% שינוי במגמה</th>
+          <th>חודשי היצע</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p class="table-caption" id="stockSource"></p>
   </div>
 
 </div>
@@ -854,6 +906,21 @@ function buildTable(){
   }
 }
 
+
+// ---- מלאי קבלנים: דירות חדשות שנותרו למכירה (נתון חודשי) ----
+// מקור: הלמ"ס, "דירות בעסקאות נדל"ן", לוח 2 — "דירות חדשות שנותרו למכירה וחודשי היצע".
+// זו סדרה נפרדת מהודעת "התחלות וגמר בנייה" שממנה מגיעים שאר הטאבים:
+// היא מתפרסמת חודשית (ולא רבעונית), ולכן גם התדירות כאן חודשית.
+const STOCK_DATA = {
+  source: { release: "147/2026", published: "14/05/2026", table: 'לוח 2', file: "04_26_147t2.xls" },
+  labels: ["01/24", "02/24", "03/24", "04/24", "05/24", "06/24", "07/24", "08/24", "09/24", "10/24", "11/24", "12/24", "01/25", "02/25", "03/25", "04/25", "05/25", "06/25", "07/25", "08/25", "09/25", "10/25", "11/25", "12/25", "01/26", "02/26", "03/26"],
+  original: [68632, 67910, 67015, 65876, 66841, 67619, 68877, 68952, 69744, 69943, 71724, 76508, 77724, 77476, 78645, 79648, 81111, 81482, 82431, 83189, 83921, 83577, 83629, 86095, 86291, 85924, 85312],
+  sa: [66342, 65624, 67362, 67287, 67465, 68506, 68959, 69836, 69327, 70436, 72502, 74438, 75667, 77544, 78829, 80404, 81514, 82174, 83278, 83733, 84852, 85732, 84406, 83567, 83855, 85853, 84596],
+  trend: [65635, 66311, 66876, 67371, 67839, 68320, 68858, 69506, 70328, 71368, 72640, 74115, 75713, 77332, 78870, 80256, 81449, 82434, 83217, 83811, 84230, 84500, 84649, 84691, 84648, 84539, 84382],
+  pctTrend: [1.3, 1.0, 0.9, 0.7, 0.7, 0.7, 0.8, 0.9, 1.2, 1.5, 1.8, 2.0, 2.2, 2.1, 2.0, 1.8, 1.5, 1.2, 1.0, 0.7, 0.5, 0.3, 0.2, 0.1, -0.1, -0.1, -0.2],
+  monthsSupply: [19.2, 18.4, 17.7, 17.4, 17.4, 17.7, 18.3, 19.0, 19.9, 20.8, 21.9, 23.0, 24.2, 25.4, 26.6, 27.7, 28.5, 29.0, 29.2, 29.3, 29.3, 29.4, 29.7, 30.2, 30.8, 31.4, 32.0]
+};
+
 // ---- City breakdown tab ("לפי יישוב") ----
 
 const CITY_COLOR_UP = '#38d39f';
@@ -1159,6 +1226,153 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   });
 });
 
+// ---- מלאי קבלנים tab ----
+
+const STOCK_LAST = STOCK_DATA.original.length - 1;
+
+function stockPctOver(months){
+  // change in the original series over the given number of months back
+  const i = STOCK_LAST, j = STOCK_LAST - months;
+  if(j < 0) return null;
+  return (STOCK_DATA.original[i] - STOCK_DATA.original[j]) / STOCK_DATA.original[j] * 100;
+}
+
+function buildStockSummary(){
+  const grid = document.getElementById('stockSummaryGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  const latest = STOCK_DATA.original[STOCK_LAST];
+  const supply = STOCK_DATA.monthsSupply[STOCK_LAST];
+  const supplyFirst = STOCK_DATA.monthsSupply[0];
+  const yoy = stockPctOver(12);
+  const sinceStart = stockPctOver(STOCK_LAST);
+
+  const cards = [
+    { label: 'מלאי דירות שנותרו למכירה · ' + STOCK_DATA.labels[STOCK_LAST],
+      value: latest.toLocaleString('he-IL'), pct: null },
+    { label: 'חודשי היצע · ' + STOCK_DATA.labels[STOCK_LAST],
+      value: supply.toFixed(1) + ' חודשים',
+      note: 'לעומת ' + supplyFirst.toFixed(1) + ' בתחילת הסדרה' },
+    { label: 'שינוי במלאי ב-12 החודשים האחרונים', value: '', pct: yoy },
+    { label: 'שינוי מאז ' + STOCK_DATA.labels[0], value: '', pct: sinceStart }
+  ];
+
+  cards.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'stat-card';
+    let sub = '';
+    if(c.pct !== null && c.pct !== undefined){
+      // arrow + sign, so direction is never carried by colour alone
+      const cls = c.pct >= 0 ? 'up' : 'down';
+      const arrow = c.pct >= 0 ? '▲' : '▼';
+      sub = '<div class="sub ' + cls + '">' + arrow + ' ' + Math.abs(c.pct).toFixed(1) + '%</div>';
+    } else if(c.note){
+      sub = '<div class="sub">' + c.note + '</div>';
+    }
+    const val = c.value ? c.value
+      : (c.pct >= 0 ? '+' : '') + c.pct.toFixed(1) + '%';
+    div.innerHTML = '<div class="label">' + c.label + '</div>'
+                  + '<div class="value">' + val + '</div>' + sub;
+    grid.appendChild(div);
+  });
+}
+
+function buildStockCharts(){
+  const el = document.getElementById('chart_stock');
+  if(!el) return;
+
+  if(charts.stock && charts.stock.destroy) charts.stock.destroy();
+  charts.stock = new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: STOCK_DATA.labels,
+      datasets: [
+        { label: 'נתונים מקוריים', data: STOCK_DATA.original,
+          borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.10)',
+          borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: true },
+        // dashed as well as a different hue, so the two series stay separable
+        // without relying on colour discrimination alone
+        { label: 'מגמה (הלמ"ס)', data: STOCK_DATA.trend,
+          borderColor: '#ffb547', borderWidth: 2, borderDash: [6, 4],
+          pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: '#93a0c2', usePointStyle: true } },
+        tooltip: { rtl: true, callbacks: {
+          label: c => ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('he-IL') + ' דירות'
+        } }
+      },
+      scales: {
+        x: { ticks: { color: '#93a0c2', maxRotation: 0, autoSkipPadding: 14 }, grid: { display: false } },
+        y: { ticks: { color: '#93a0c2', callback: v => v.toLocaleString('he-IL') },
+             grid: { color: 'rgba(255,255,255,0.07)' } }
+      }
+    }
+  });
+
+  const el2 = document.getElementById('chart_supply');
+  if(charts.supply && charts.supply.destroy) charts.supply.destroy();
+  charts.supply = new Chart(el2.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: STOCK_DATA.labels,
+      datasets: [{ label: 'חודשי היצע', data: STOCK_DATA.monthsSupply,
+        borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.12)',
+        borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: true }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { rtl: true, callbacks: {
+          label: c => ' ' + c.parsed.y.toFixed(1) + ' חודשי היצע'
+        } }
+      },
+      scales: {
+        x: { ticks: { color: '#93a0c2', maxRotation: 0, autoSkipPadding: 14 }, grid: { display: false } },
+        y: { ticks: { color: '#93a0c2' }, grid: { color: 'rgba(255,255,255,0.07)' } }
+      }
+    }
+  });
+}
+
+function buildStockTable(){
+  const tbody = document.querySelector('#stockTable tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+  for(let i = STOCK_LAST; i >= 0; i--){
+    const p = STOCK_DATA.pctTrend[i];
+    const cls = p >= 0 ? 'pos' : 'neg';
+    const sign = p >= 0 ? '+' : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + STOCK_DATA.labels[i] + '</td>'
+      + '<td>' + STOCK_DATA.original[i].toLocaleString('he-IL') + '</td>'
+      + '<td>' + STOCK_DATA.sa[i].toLocaleString('he-IL') + '</td>'
+      + '<td>' + STOCK_DATA.trend[i].toLocaleString('he-IL') + '</td>'
+      + '<td class="' + cls + '">' + sign + p.toFixed(1) + '%</td>'
+      + '<td>' + STOCK_DATA.monthsSupply[i].toFixed(1) + '</td>';
+    tbody.appendChild(tr);
+  }
+  const src = document.getElementById('stockSource');
+  if(src){
+    src.textContent = 'מקור: הלמ"ס, הודעה ' + STOCK_DATA.source.release + ' (פורסמה '
+      + STOCK_DATA.source.published + '), ' + STOCK_DATA.source.table + ' — '
+      + STOCK_DATA.source.file + '. הנתונים מתעדכנים מדי חודש.';
+  }
+}
+
+function buildStockTab(){
+  buildStockSummary();
+  buildStockCharts();
+  buildStockTable();
+}
+
 function populateCustomRangeSelects(){
   const fromSel = document.getElementById('customFrom');
   const toSel = document.getElementById('customTo');
@@ -1238,6 +1452,7 @@ buildCitySummary();
 buildCityChart();
 buildCityTable();
 buildCityTrends();
+buildStockTab();
 </script>
 
 </body>

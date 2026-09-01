@@ -7,5 +7,16 @@
     "table_a_pdf": "https://www.cbs.gov.il/he/mediarelease/DocLib/2026/189/04_26_189b.pdf"
   },
   "next_release_announced": "2026-09-17",
-  "checked_at": "2026-08-10"
+  "checked_at": "2026-08-10",
+  "stock_series": {
+    "name": "דירות בעסקאות נדל\"ן",
+    "release_number": "147/2026",
+    "published": "2026-05-14",
+    "period_covered": "ינואר-מרץ 2026",
+    "data_through": "2026-03",
+    "table_file": "04_26_147t2.xls",
+    "table_title": "לוח 2. דירות חדשות שנותרו למכירה וחודשי היצע",
+    "cadence": "monthly, published mid-month (13th-25th)",
+    "note": "A newer release 216/2026 was found on 2026-09-01 but could not be downloaded (CBS rate-limit); the daily run should pick it up."
+  }
 }
