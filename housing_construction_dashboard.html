@@ -239,6 +239,32 @@ window.Chart = Chart;
   }
   td.pos{color:var(--up);}
   td.neg{color:var(--down);}
+
+  /* --- city trends: small multiples --- */
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+  .view-toggle{display:flex;gap:6px;}
+  .view-btn{background:var(--panel2);color:var(--muted);border:1px solid var(--border);border-radius:8px;
+            padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
+  .view-btn:hover{color:var(--text);}
+  .view-btn.active{background:var(--accent1);color:#fff;border-color:var(--accent1);}
+  .trends-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-top:10px;}
+  .trend-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+  .trend-card.is-total{border-color:var(--accent1);background:rgba(79,140,255,0.09);}
+  .trend-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .trend-name{font-size:13px;font-weight:600;color:var(--text);}
+  .trend-chg{font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .trend-chg.up{color:var(--up);}
+  .trend-chg.down{color:var(--down);}
+  .trend-chg.na{color:var(--muted);}
+  .trend-val{font-size:18px;font-weight:700;color:var(--text);margin-top:1px;font-variant-numeric:tabular-nums;}
+  .trend-val small{font-size:11px;font-weight:400;color:var(--muted);}
+  .spark{width:100%;height:40px;display:block;margin-top:6px;overflow:visible;}
+  .spark-x{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:1px;}
+  .sp-hit{fill:transparent;cursor:pointer;}
+  .sp-dot{fill:var(--accent1);}
+  .trend-tip{position:fixed;pointer-events:none;background:#0b1120;border:1px solid var(--border);
+             border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);z-index:99;
+             box-shadow:0 6px 18px rgba(0,0,0,.45);line-height:1.5;}
   th.sortable-th{cursor:pointer; user-select:none;}
   th.sortable-th:hover{color:var(--text);}
   .sort-arrow{font-size:0.7em; margin-inline-start:4px; opacity:0.7;}
@@ -446,7 +472,20 @@ window.Chart = Chart;
   </div>
 
   <div class="table-section">
-    <h2>טבלת יישובים מלאה</h2>
+    <div class="section-head">
+      <h2>כל היישובים — מגמה לאורך זמן</h2>
+      <div class="view-toggle">
+        <button class="view-btn active" data-view="trends">📈 גרף מגמות</button>
+        <button class="view-btn" data-view="table">▤ טבלה</button>
+      </div>
+    </div>
+
+    <div id="cityTrendsWrap">
+      <div id="cityTrendsGrid" class="trends-grid"></div>
+      <p class="table-caption">כל כרטיס מציג את המגמה של יישוב אחד על פני ארבע תקופות. מעבר עכבר נקודה מציג את הערך המדויק. <strong>שים לב:</strong> לכל כרטיס קנה מידה משלו, כדי שצורת המגמה תהיה קריאה גם ביישובים קטנים — לכן אין להשוות גובה של קו בין כרטיסים. להשוואת גדלים — גרף העמודות למעלה או תצוגת הטבלה.</p>
+    </div>
+
+    <div id="cityTableWrap" style="display:none;">
     <table id="cityTable">
       <thead>
         <tr>
@@ -461,6 +500,7 @@ window.Chart = Chart;
       <tbody></tbody>
     </table>
     <p class="table-caption">לחיצה על כותרת עמודה ממיינת את הטבלה לפיה (שורת "סך הכל ארצי" תמיד נשארת קבועה למעלה). תא עם "—" משמעו שהערך לא דווח במקור עבור אותה תקופה (מתחת לסף הדיווח), ולכן גם לא ניתן לחשב עבורו אחוז שינוי.</p>
+    </div>
   </div>
 
 </div>
@@ -1002,6 +1042,123 @@ document.querySelectorAll('.topn-btn').forEach(btn => {
   });
 });
 
+const CITY_YEAR_SHORT = CITY_DATA.years.map(y => {
+  const m = y.match(/(\d{4})\D+(\d{4})/);
+  return m ? m[1].slice(2) + '–' + m[2].slice(2) : y;
+});
+
+function sparkSVG(values, name){
+  const W = 100, H = 34, PAD = 3;
+  const n = values.length;
+  const present = values.map((v, i) => ({v: v, i: i})).filter(p => p.v !== null && p.v !== undefined);
+  if(!present.length) return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '"></svg>';
+  const vals = present.map(p => p.v);
+  const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  const span = (max - min) || 1;
+  const x = i => n === 1 ? W / 2 : PAD + i * (W - 2 * PAD) / (n - 1);
+  const y = v => H - PAD - ((v - min) / span) * (H - 2 * PAD);
+
+  // break the line wherever a period had no reported value, rather than
+  // interpolating across a gap that does not exist in the source
+  let segs = [], cur = [];
+  values.forEach((v, i) => {
+    if(v === null || v === undefined){ if(cur.length) segs.push(cur); cur = []; }
+    else cur.push([x(i), y(v)]);
+  });
+  if(cur.length) segs.push(cur);
+
+  let out = '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' + name + '">';
+  segs.forEach(seg => {
+    if(seg.length === 1){
+      out += '<circle cx="' + seg[0][0].toFixed(1) + '" cy="' + seg[0][1].toFixed(1) + '" r="2" class="sp-dot"/>';
+    } else {
+      out += '<polyline fill="none" stroke="#4f8cff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'
+           + seg.map(pt => pt[0].toFixed(1) + ',' + pt[1].toFixed(1)).join(' ') + '"/>';
+    }
+  });
+  const last = present[present.length - 1];
+  out += '<circle cx="' + x(last.i).toFixed(1) + '" cy="' + y(last.v).toFixed(1) + '" r="2.6" class="sp-dot"/>';
+  present.forEach(pt => {
+    out += '<circle class="sp-hit" cx="' + x(pt.i).toFixed(1) + '" cy="' + y(pt.v).toFixed(1) + '" r="7"'
+         + ' data-name="' + name + '" data-period="' + CITY_DATA.years[pt.i] + '" data-val="' + pt.v + '"/>';
+  });
+  return out + '</svg>';
+}
+
+function trendChangeHTML(pct){
+  if(pct === null || pct === undefined) return '<span class="trend-chg na">—</span>';
+  const up = pct >= 0;
+  // arrow + signed number, so direction never rests on colour alone: the up/down
+  // pair measures CVD deltaE 5.5 under deuteranopia, i.e. indistinguishable
+  return '<span class="trend-chg ' + (up ? 'up' : 'down') + '">' + (up ? '▲' : '▼') + ' '
+       + (up ? '+' : '') + pct.toFixed(1) + '%</span>';
+}
+
+function trendCard(entry, isTotal){
+  const latest = entry.values[LATEST_YEAR_IDX];
+  return '<div class="trend-card' + (isTotal ? ' is-total' : '') + '">'
+    + '<div class="trend-head"><span class="trend-name">' + entry.name + '</span>' + trendChangeHTML(entry.pctChange) + '</div>'
+    + '<div class="trend-val">' + (latest === null || latest === undefined ? '—' : latest.toLocaleString('he-IL'))
+    + ' <small>דירות</small></div>'
+    + sparkSVG(entry.values, entry.name)
+    + '<div class="spark-x"><span>' + CITY_YEAR_SHORT[0] + '</span><span>' + CITY_YEAR_SHORT[CITY_YEAR_SHORT.length - 1] + '</span></div>'
+    + '</div>';
+}
+
+function buildCityTrends(){
+  const grid = document.getElementById('cityTrendsGrid');
+  if(!grid) return;
+  grid.innerHTML = trendCard(CITY_DATA.total, true)
+    + citiesByLatestValue().map(c => trendCard(c, false)).join('');
+}
+
+let cityTrendTip = null;
+function trendTip(){
+  if(!cityTrendTip){
+    cityTrendTip = document.createElement('div');
+    cityTrendTip.className = 'trend-tip';
+    cityTrendTip.style.display = 'none';
+    document.body.appendChild(cityTrendTip);
+  }
+  return cityTrendTip;
+}
+
+document.addEventListener('mouseover', e => {
+  const hit = e.target && e.target.closest ? e.target.closest('.sp-hit') : null;
+  if(!hit) return;
+  const t = trendTip();
+  t.innerHTML = '<strong>' + hit.dataset.name + '</strong><br>' + hit.dataset.period + '<br>'
+              + Number(hit.dataset.val).toLocaleString('he-IL') + ' דירות';
+  t.style.display = 'block';
+});
+
+document.addEventListener('mousemove', e => {
+  if(!cityTrendTip || cityTrendTip.style.display === 'none') return;
+  const pad = 14;
+  const r = cityTrendTip.getBoundingClientRect();
+  let left = e.clientX + pad, top = e.clientY + pad;
+  if(left + r.width > window.innerWidth) left = e.clientX - r.width - pad;
+  if(top + r.height > window.innerHeight) top = e.clientY - r.height - pad;
+  cityTrendTip.style.left = left + 'px';
+  cityTrendTip.style.top = top + 'px';
+});
+
+document.addEventListener('mouseout', e => {
+  const hit = e.target && e.target.closest ? e.target.closest('.sp-hit') : null;
+  if(hit && cityTrendTip) cityTrendTip.style.display = 'none';
+});
+
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const showTrends = btn.dataset.view === 'trends';
+    document.getElementById('cityTrendsWrap').style.display = showTrends ? '' : 'none';
+    document.getElementById('cityTableWrap').style.display = showTrends ? 'none' : '';
+    if(cityTrendTip) cityTrendTip.style.display = 'none';
+  });
+});
+
 function populateCustomRangeSelects(){
   const fromSel = document.getElementById('customFrom');
   const toSel = document.getElementById('customTo');
@@ -1080,6 +1237,7 @@ buildTable();
 buildCitySummary();
 buildCityChart();
 buildCityTable();
+buildCityTrends();
 </script>
 
 </body>
