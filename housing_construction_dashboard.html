@@ -518,6 +518,13 @@ window.Chart = Chart;
 
   <div id="stockSummaryGrid" class="summary-grid"></div>
 
+  <div class="controls">
+    <span class="ctitle">טווח בגרפים:</span>
+    <button class="stockrange-btn" data-months="12">12 חודשים אחרונים</button>
+    <button class="stockrange-btn active" data-months="24">שנתיים אחרונות</button>
+    <button class="stockrange-btn" data-months="all">הכל</button>
+  </div>
+
   <div class="chart-card">
     <h2><span class="dot" style="background:var(--accent1)"></span>מלאי דירות חדשות שנותרו למכירה</h2>
     <p class="desc">
@@ -1321,22 +1328,30 @@ function buildStockSummary(){
   });
 }
 
+let stockRange = 24; // months shown in the charts; the table below always shows everything
+
+function stockSlice(arr){
+  if(stockRange === 'all') return arr;
+  return arr.slice(Math.max(0, arr.length - stockRange));
+}
+
 function buildStockCharts(){
   const el = document.getElementById('chart_stock');
   if(!el) return;
+  const L = stockSlice(STOCK_DATA.labels);
 
   if(charts.stock && charts.stock.destroy) charts.stock.destroy();
   charts.stock = new Chart(el.getContext('2d'), {
     type: 'line',
     data: {
-      labels: STOCK_DATA.labels,
+      labels: L,
       datasets: [
-        { label: 'נתונים מקוריים', data: STOCK_DATA.original,
+        { label: 'נתונים מקוריים', data: stockSlice(STOCK_DATA.original),
           borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.10)',
           borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: true },
         // dashed as well as a different hue, so the two series stay separable
         // without relying on colour discrimination alone
-        { label: 'מגמה (הלמ"ס)', data: STOCK_DATA.trend,
+        { label: 'מגמה (הלמ"ס)', data: stockSlice(STOCK_DATA.trend),
           borderColor: '#ffb547', borderWidth: 2, borderDash: [6, 4],
           pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: false }
       ]
@@ -1363,8 +1378,8 @@ function buildStockCharts(){
   charts.supply = new Chart(el2.getContext('2d'), {
     type: 'line',
     data: {
-      labels: STOCK_DATA.labels,
-      datasets: [{ label: 'חודשי היצע', data: STOCK_DATA.monthsSupply,
+      labels: L,
+      datasets: [{ label: 'חודשי היצע', data: stockSlice(STOCK_DATA.monthsSupply),
         borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.12)',
         borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: true }]
     },
@@ -1434,6 +1449,15 @@ function buildCityStock(){
       + '. מעבר עכבר על נקודה מציג את הערך המדויק.';
   }
 }
+
+document.querySelectorAll('.stockrange-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.stockrange-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    stockRange = btn.dataset.months === 'all' ? 'all' : parseInt(btn.dataset.months);
+    buildStockCharts();
+  });
+});
 
 function buildStockTab(){
   buildStockSummary();
