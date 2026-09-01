@@ -57,6 +57,17 @@ The dashboard also has a tab fed by a COMPLETELY DIFFERENT CBS release. Check it
 - **Validation before writing anything**: recompute each row's % change from the trend column and confirm it matches column 1 within 0.15pp. On 04_26_147t2.xls all 26 comparisons matched exactly. If they do not match, the column order changed — STOP and use the step-6 failure path.
 - **Then update** the `STOCK_DATA` object in `housing_construction_dashboard.html` (keys: `source`, `labels` as "MM/YY", `original`, `sa`, `trend`, `pctTrend`, `monthsSupply` — all arrays of equal length), and update `stock_series` in `data/last_release.json`.
 
+### Also grab the by-city stock snapshot (`t8.xls`) — and APPEND, never replace
+The same release carries `04_{yy}_{n}t8.xls` = `תרשים 5 - דירות חדשות שנותרו למכירה בערים הגדולות...`, two columns (city name, stock) for ~18 cities over 100k residents.
+
+**Critical difference from every other table here: it is a SNAPSHOT OF ONE MONTH, not a series.** CBS publishes no historical by-city stock series at all — the time series in `CITY_STOCK` is one this repo accumulates itself, one point per release. So:
+- Read the month from the sheet title (e.g. "מאי 2026"), not from the release's own period — the snapshot month lags the publication date by ~2 months (release 216/2026, published 14/07/2026, carries May 2026).
+- If that month is already the last entry in `CITY_STOCK.labels`, do nothing. Otherwise **append** a new label, push one value per city, recompute each `pctChange` as first→last, and add the release id to `CITY_STOCK.releases`. Never rebuild the array from a single release — that would throw away all accumulated history.
+- Normalise city names before matching (CBS writes `תל אביב -יפו` with a stray space before the hyphen). If a city is missing from the new snapshot, keep the city and push `null` for that month — `sparkSVG` already breaks the line on nulls.
+- Observed cadence for this table: Jan 2026 (077), Mar 2026 (147), May 2026 (216) — roughly every two months, not monthly.
+
+Note: `t2.xls` (the national monthly table) DOES get replaced wholesale each time, because CBS revises earlier months in it — e.g. Jan-2024 months-of-supply moved 19.2 → 19.3 between releases 147 and 216. Do not merge it; take the newest release's table as the whole truth.
+
 ### ⚠ Do NOT brute-force release numbers on cbs.gov.il
 Finding this series' current release number by scanning `04_26_{n}t2.xls` over a range **got this machine rate-limited/blocked by CBS on 2026-09-01** after roughly 90 requests — every subsequent request failed with `Recv failure: Connection was reset` for a considerable time, which would break the daily run entirely. Discover the number with WebSearch instead. If you truly must scan, cap it at ~15 requests with >=2s between them, and abort the whole scan on the first connection reset.
 
