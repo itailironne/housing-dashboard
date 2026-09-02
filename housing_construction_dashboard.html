@@ -1366,7 +1366,8 @@ function buildStockCharts(){
         } }
       },
       scales: {
-        x: { ticks: { color: '#93a0c2', maxRotation: 0, autoSkipPadding: 14 }, grid: { display: false } },
+        x: { ticks: { color: '#93a0c2', autoSkip: false, maxRotation: 60, minRotation: 60,
+                      font: { size: 10 } }, grid: { display: false } },
         y: { ticks: { color: '#93a0c2', callback: v => v.toLocaleString('he-IL') },
              grid: { color: 'rgba(255,255,255,0.07)' } }
       }
@@ -1393,7 +1394,8 @@ function buildStockCharts(){
         } }
       },
       scales: {
-        x: { ticks: { color: '#93a0c2', maxRotation: 0, autoSkipPadding: 14 }, grid: { display: false } },
+        x: { ticks: { color: '#93a0c2', autoSkip: false, maxRotation: 60, minRotation: 60,
+                      font: { size: 10 } }, grid: { display: false } },
         y: { ticks: { color: '#93a0c2' }, grid: { color: 'rgba(255,255,255,0.07)' } }
       }
     }
