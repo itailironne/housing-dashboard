@@ -283,6 +283,12 @@ window.Chart = Chart;
   }
   .city-note .source-link{margin-top:0;}
   .intro{color:var(--muted);font-size:0.86rem;line-height:1.6;margin:-4px 0 0;}
+  .files-list{list-style:none;padding:0;margin:10px 0 0;display:grid;
+              grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;}
+  .files-list li{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;}
+  .files-list a{color:var(--accent1);text-decoration:none;font-weight:600;font-size:0.9rem;}
+  .files-list a:hover{text-decoration:underline;}
+  .files-list .ftitle{display:block;color:var(--muted);font-size:0.8rem;margin-top:2px;line-height:1.5;}
   .data-head{
     background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent1);
     border-radius:10px;padding:12px 14px;margin:0 0 16px;
@@ -472,6 +478,26 @@ window.Chart = Chart;
   </div>
 
 </div>
+
+
+  <div class="table-section">
+    <h2>קובצי המקור של הלמ"ס</h2>
+    <p class="intro" style="margin:6px 0 0;">
+      כל הקבצים של הודעה 189/2026 ("התחלות וגמר בנייה", אפריל 2025 – מרץ 2026, פורסמה 18/06/2026),
+      שמורים כאן בעותק מקומי כארכיון — כך שהם זמינים גם אם הלמ"ס תשנה או תסיר אותם.
+      הדשבורד עצמו בנוי מלוח 1 ומלוח א׳ שב-PDF; שאר הלוחות מצורפים כמקור מלא.
+    </p>
+    <ul class="files-list">
+      <li><a href="04_26_189t1.xls" download>לוח 1 — 04_26_189t1.xls</a><span class="ftitle">דירות לפי שלב בנייה — ארצי, רבעוני. <strong>זהו המקור לגרפים ולטבלה בטאב הזה.</strong></span></li>
+      <li><a href="04_26_189t2.xls" download>לוח 2 — 04_26_189t2.xls</a><span class="ftitle">דירות לפי מחוז ושלב בנייה</span></li>
+      <li><a href="04_26_189t3.xls" download>לוח 3 — 04_26_189t3.xls</a><span class="ftitle">דירות בבניינים חדשים לפי מספר דירות בבניין ומספר קומות</span></li>
+      <li><a href="04_26_189t4.xls" download>לוח 4 — 04_26_189t4.xls</a><span class="ftitle">דירות שהוחל בבנייתן לפי מטרת הבנייה (למכירה / לא למכירה / בסבסוד), מחוז ותקופה</span></li>
+      <li><a href="04_26_189t5.xls" download>לוח 5 — 04_26_189t5.xls</a><span class="ftitle">הריסה ובנייה מחדש ותוספת דירות לבניינים קיימים — תמ"א 38, תמ"א 38/2 ופינוי-בינוי, לפי מחוז</span></li>
+      <li><a href="04_26_189t6.xls" download>לוח 6 — 04_26_189t6.xls</a><span class="ftitle">משך בנייה ממוצע לבניין מגורים שהסתיים, לפי שטח הבניין</span></li>
+      <li><a href="04_26_189t7.xls" download>לוח 7 — 04_26_189t7.xls</a><span class="ftitle">שטח בנייה (אלפי מ"ר) לפי ייעוד ושלב בנייה</span></li>
+      <li><a href="04_26_189b.pdf" download>ההודעה המלאה (PDF) — 04_26_189b.pdf</a><span class="ftitle">כולל את לוח א׳ — דירות שהחלה בנייתן לפי יישובים נבחרים, <strong>המקור לטאב "לפי יישוב"</strong></span></li>
+    </ul>
+  </div>
 
 <div class="wrap tab-panel" id="tab-cities" style="display:none;">
 
