@@ -289,6 +289,14 @@ window.Chart = Chart;
   .files-list a{color:var(--accent1);text-decoration:none;font-weight:600;font-size:0.9rem;}
   .files-list a:hover{text-decoration:underline;}
   .files-list .ftitle{display:block;color:var(--muted);font-size:0.8rem;margin-top:2px;line-height:1.5;}
+  .src-tag{
+    display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;
+    background:var(--panel2);border:1px solid var(--border);border-radius:7px;
+    padding:3px 9px;margin:0 0 8px;font-size:0.75rem;color:var(--muted);
+  }
+  .src-tag a{color:var(--accent1);text-decoration:none;font-weight:600;}
+  .src-tag a:hover{text-decoration:underline;}
+  .src-tag .lbl{color:var(--text);}
   .data-head{
     background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent1);
     border-radius:10px;padding:12px 14px;margin:0 0 16px;
@@ -432,6 +440,7 @@ window.Chart = Chart;
     </p>
   </div>
 
+  <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
   <div id="summaryGrid" class="summary-grid"></div>
 
   <div class="controls">
@@ -459,6 +468,7 @@ window.Chart = Chart;
 
   <div class="table-section">
     <h2>טבלת נתונים מלאה</h2>
+    <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
     <table id="dataTable">
       <thead>
         <tr>
@@ -519,6 +529,7 @@ window.Chart = Chart;
 
   <div class="chart-card">
     <h2><span class="dot" style="background:var(--accent1)"></span>התחלות בנייה לפי יישוב</h2>
+    <p class="src-tag">📄 <span class="lbl">לוח א׳</span> — דירות שהחלה בנייתן לפי יישובים, עמ׳ 7 · <a href="04_26_189b.pdf" download>04_26_189b.pdf</a></p>
     <p class="desc">דירות שהחלה בנייתן ב-12 החודשים אפריל 2025–מרץ 2026, לפי יישוב מוביל. צבע העמודה מציין אם היה שינוי חיובי (ירוק) או שלילי (אדום) לעומת השנה הקודמת.</p>
     <div class="chart-holder" id="cityChartHolder"><canvas id="chart_cities"></canvas></div>
   </div>
@@ -526,6 +537,7 @@ window.Chart = Chart;
   <div class="table-section">
     <div class="section-head">
       <h2>כל היישובים — דירות שהחלה בנייתן, לאורך זמן</h2>
+      <p class="src-tag">📄 <span class="lbl">לוח א׳</span> — דירות שהחלה בנייתן לפי יישובים, עמ׳ 7 · <a href="04_26_189b.pdf" download>04_26_189b.pdf</a></p>
       <div class="view-toggle">
         <button class="view-btn active" data-view="trends">📈 גרף מגמות</button>
         <button class="view-btn" data-view="table">▤ טבלה</button>
@@ -543,6 +555,7 @@ window.Chart = Chart;
     </div>
 
     <div id="cityTableWrap" style="display:none;">
+    <p class="src-tag">📄 <span class="lbl">לוח א׳</span> — דירות שהחלה בנייתן לפי יישובים, עמ׳ 7 · <a href="04_26_189b.pdf" download>04_26_189b.pdf</a></p>
     <table id="cityTable">
       <thead>
         <tr>
@@ -750,6 +763,7 @@ function buildCharts(){
         <span id="growth_${cat.key}" class="growth-badge"></span>
       </h2>
       <p class="desc">${cat.subtitle}</p>
+      <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
       ${legendHtml(cat)}
       <div class="chart-holder"><canvas id="chart_${cat.key}"></canvas></div>
     `;
