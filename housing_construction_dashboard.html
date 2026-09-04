@@ -1190,9 +1190,25 @@ document.querySelectorAll('.topn-btn').forEach(btn => {
   });
 });
 
+const HE_MONTH_NUM = {
+  'ינואר': 1, 'פברואר': 2, 'מרץ': 3, 'אפריל': 4, 'מאי': 5, 'יוני': 6,
+  'יולי': 7, 'אוגוסט': 8, 'ספטמבר': 9, 'אוקטובר': 10, 'נובמבר': 11, 'דצמבר': 12
+};
+
+// Each period is a 12-month window like "אפריל 2025-מרץ 2026". Showing only the
+// years ("25–26") reads like a month or a calendar span, so keep the months in:
+// "4/25–3/26" is unambiguous and still fits the card.
 const CITY_YEAR_SHORT = CITY_DATA.years.map(y => {
-  const m = y.match(/(\d{4})\D+(\d{4})/);
-  return m ? m[1].slice(2) + '–' + m[2].slice(2) : y;
+  // "אפריל 2025-מרץ 2026" -> "4/25–3/26". Showing only the years ("25–26")
+  // reads like a month or a calendar span, so keep the months in the label.
+  const fmt = part => {
+    const t = part.trim().split(/\s+/);
+    const mo = HE_MONTH_NUM[t[0]];
+    const yr = t[t.length - 1];
+    return (mo || t[0]) + '/' + yr.slice(2);
+  };
+  const parts = y.split('-');
+  return parts.length === 2 ? fmt(parts[0]) + '–' + fmt(parts[1]) : y;
 });
 
 function sparkSVG(values, name){
