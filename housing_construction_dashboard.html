@@ -546,8 +546,10 @@ window.Chart = Chart;
 
     <div id="cityTrendsWrap">
       <p class="intro" style="margin:8px 0 0;">
-      <span style="color:var(--text);font-weight:600;">מה נמדד:</span> מספר הדירות שהחלה בנייתן ביישוב,
-      בכל אחת מארבע תקופות של 12 חודשים (אפריל–מרץ). כל נקודה היא שנה שלמה, לא חודש.
+      <span style="color:var(--text);font-weight:600;">מה נמדד:</span> מספר הדירות שהחלה בנייתן ביישוב.
+      <span style="color:var(--text);font-weight:600;">כל נקודה על הציר = שנה שלמה (12 חודשים), לא רבעון ולא חודש.</span>
+      התווית מציינת את החודש שבו התקופה <em>מסתיימת</em>: "מרץ 26" = 12 החודשים אפריל 2025 עד מרץ 2026.
+      יש 4 נקודות בלבד, כי הלמ"ס מפרסמת נתוני יישובים רק כסכום שנתי מתגלגל.
       היחידה: דירות. הציר מתקדם משמאל לימין — הישן משמאל, החדש מימין.
     </p>
     <div id="cityTrendsGrid" class="trends-grid"></div>
@@ -1122,17 +1124,20 @@ const HE_MONTH_NUM = {
 // Each period is a 12-month window like "אפריל 2025-מרץ 2026". Showing only the
 // years ("25–26") reads like a month or a calendar span, so keep the months in:
 // "4/25–3/26" is unambiguous and still fits the card.
+const HE_MONTH_SHORT = {
+  'ינואר':'ינו׳','פברואר':'פבר׳','מרץ':'מרץ','אפריל':'אפר׳','מאי':'מאי','יוני':'יוני',
+  'יולי':'יולי','אוגוסט':'אוג׳','ספטמבר':'ספט׳','אוקטובר':'אוק׳','נובמבר':'נוב׳','דצמבר':'דצמ׳'
+};
+
+// Label each point by the month the 12-month window ENDS in, e.g. "מרץ 23".
+// Numeric forms are ambiguous here: "4/22" reads as Q4-2022 just as easily as
+// April-2022, and "22–23" looks like a month. A month name cannot be mistaken
+// for a quarter. The caption states that each point covers the preceding year.
 const CITY_YEAR_SHORT = CITY_DATA.years.map(y => {
-  // "אפריל 2025-מרץ 2026" -> "4/25–3/26". Showing only the years ("25–26")
-  // reads like a month or a calendar span, so keep the months in the label.
-  const fmt = part => {
-    const t = part.trim().split(/\s+/);
-    const mo = HE_MONTH_NUM[t[0]];
-    const yr = t[t.length - 1];
-    return (mo || t[0]) + '/' + yr.slice(2);
-  };
   const parts = y.split('-');
-  return parts.length === 2 ? fmt(parts[0]) + '–' + fmt(parts[1]) : y;
+  const last = (parts[parts.length - 1] || '').trim().split(/\s+/);
+  const mo = HE_MONTH_SHORT[last[0]];
+  return mo ? mo + ' ' + last[last.length - 1].slice(2) : y;
 });
 
 function sparkSVG(values, name){
