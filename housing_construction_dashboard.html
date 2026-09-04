@@ -259,7 +259,12 @@ window.Chart = Chart;
   .trend-val{font-size:18px;font-weight:700;color:var(--text);margin-top:1px;font-variant-numeric:tabular-nums;}
   .trend-val small{font-size:11px;font-weight:400;color:var(--muted);}
   .spark{width:100%;height:40px;display:block;margin-top:6px;overflow:visible;}
-  .spark-x{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:1px;}
+  .chart-holder{direction:ltr;}
+  /* the page is dir=rtl, but a time axis must read oldest->newest left to right.
+     SVG coordinates ignore CSS direction, so without this the flex label row
+     rendered mirrored relative to the line it labels. */
+  .spark-x{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);
+           margin-top:1px;direction:ltr;}
   .sp-hit{fill:transparent;cursor:pointer;}
   .sp-dot{fill:var(--accent1);}
   .trend-tip{position:fixed;pointer-events:none;background:#0b1120;border:1px solid var(--border);
@@ -277,6 +282,14 @@ window.Chart = Chart;
     margin:-4px 0 0;
   }
   .city-note .source-link{margin-top:0;}
+  .intro{color:var(--muted);font-size:0.86rem;line-height:1.6;margin:-4px 0 0;}
+  .data-head{
+    background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent1);
+    border-radius:10px;padding:12px 14px;margin:0 0 16px;
+  }
+  .data-head h3{margin:0 0 4px;font-size:1rem;color:var(--text);}
+  .data-head p{margin:0;color:var(--muted);font-size:0.86rem;line-height:1.6;}
+  .data-head .kv{color:var(--text);font-weight:600;}
   .table-caption{
     color:var(--muted);
     font-size:0.78rem;
@@ -401,6 +414,19 @@ window.Chart = Chart;
 
 <div class="wrap tab-panel active" id="tab-dashboard">
 
+  <div class="data-head">
+    <h3>לוח 1 — דירות לפי שלב בנייה</h3>
+    <p>
+      <span class="kv">מה נמדד:</span> מספר הדירות בכל שלב בתהליך הבנייה —
+      היתרי בנייה שניתנו, דירות שהחלה בנייתן, דירות בבנייה פעילה (מלאי בתהליך, בסוף התקופה)
+      ודירות שבנייתן הסתיימה.
+      <span class="kv">זהו נתון על פעילות הבנייה עצמה — לא על מכירות ולא על מלאי לא-מכור.</span><br>
+      <span class="kv">חתך:</span> ארצי, <span class="kv">רבעוני</span> (2018 Q1 ואילך). היחידה: דירות.<br>
+      <span class="kv">מקור:</span> הלמ"ס, "התחלות וגמר בנייה", הודעה 189/2026 (18/06/2026), לוח 1 —
+      קובץ <code>04_26_189t1.xls</code>.
+    </p>
+  </div>
+
   <div id="summaryGrid" class="summary-grid"></div>
 
   <div class="controls">
@@ -474,7 +500,7 @@ window.Chart = Chart;
 
   <div class="table-section">
     <div class="section-head">
-      <h2>כל היישובים — מגמה לאורך זמן</h2>
+      <h2>כל היישובים — דירות שהחלה בנייתן, לאורך זמן</h2>
       <div class="view-toggle">
         <button class="view-btn active" data-view="trends">📈 גרף מגמות</button>
         <button class="view-btn" data-view="table">▤ טבלה</button>
@@ -482,7 +508,12 @@ window.Chart = Chart;
     </div>
 
     <div id="cityTrendsWrap">
-      <div id="cityTrendsGrid" class="trends-grid"></div>
+      <p class="intro" style="margin:8px 0 0;">
+      <span style="color:var(--text);font-weight:600;">מה נמדד:</span> מספר הדירות שהחלה בנייתן ביישוב,
+      בכל אחת מארבע תקופות של 12 חודשים (אפריל–מרץ). כל נקודה היא שנה שלמה, לא חודש.
+      היחידה: דירות. הציר מתקדם משמאל לימין — הישן משמאל, החדש מימין.
+    </p>
+    <div id="cityTrendsGrid" class="trends-grid"></div>
       <p class="table-caption">כל כרטיס מציג את המגמה של יישוב אחד על פני ארבע תקופות. מעבר עכבר נקודה מציג את הערך המדויק. <strong>שים לב:</strong> לכל כרטיס קנה מידה משלו, כדי שצורת המגמה תהיה קריאה גם ביישובים קטנים — לכן אין להשוות גובה של קו בין כרטיסים. להשוואת גדלים — גרף העמודות למעלה או תצוגת הטבלה.</p>
     </div>
 
@@ -509,7 +540,7 @@ window.Chart = Chart;
 <div class="wrap tab-panel" id="tab-stock" style="display:none;">
 
   <p class="intro">
-    <strong>מלאי קבלנים</strong> — דירות חדשות שנותרו למכירה בסוף כל חודש, ומספר חודשי ההיצע
+    <strong>מלאי קבלנים (לוח 2 — "דירות חדשות שנותרו למכירה וחודשי היצע")</strong> — דירות חדשות שנותרו למכירה בסוף כל חודש, ומספר חודשי ההיצע
     (כמה חודשי מכירות דרושים כדי למכור את כל המלאי, לפי קצב המכירות הנוכחי).
     בניגוד לשאר הטאבים בדשבורד, שמבוססים על הודעת <em>"התחלות וגמר בנייה"</em> הרבעונית,
     הנתון הזה מגיע מהודעה אחרת של הלמ"ס — <em>"דירות בעסקאות נדל"ן"</em> — שמתפרסמת
