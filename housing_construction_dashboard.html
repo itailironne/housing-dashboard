@@ -408,7 +408,6 @@ window.Chart = Chart;
 <div class="tabs">
   <button class="tab-btn active" data-tab="dashboard">📊 לוח הנתונים</button>
   <button class="tab-btn" data-tab="cities">🏙️ לפי יישוב</button>
-  <button class="tab-btn" data-tab="stock">🏗️ מלאי קבלנים</button>
   <button class="tab-btn" data-tab="help">🔄 איך לעדכן נתונים</button>
 </div>
 
@@ -533,76 +532,6 @@ window.Chart = Chart;
     </table>
     <p class="table-caption">לחיצה על כותרת עמודה ממיינת את הטבלה לפיה (שורת "סך הכל ארצי" תמיד נשארת קבועה למעלה). תא עם "—" משמעו שהערך לא דווח במקור עבור אותה תקופה (מתחת לסף הדיווח), ולכן גם לא ניתן לחשב עבורו אחוז שינוי.</p>
     </div>
-  </div>
-
-</div>
-
-<div class="wrap tab-panel" id="tab-stock" style="display:none;">
-
-  <p class="intro">
-    <strong>מלאי קבלנים (לוח 2 — "דירות חדשות שנותרו למכירה וחודשי היצע")</strong> — דירות חדשות שנותרו למכירה בסוף כל חודש, ומספר חודשי ההיצע
-    (כמה חודשי מכירות דרושים כדי למכור את כל המלאי, לפי קצב המכירות הנוכחי).
-    בניגוד לשאר הטאבים בדשבורד, שמבוססים על הודעת <em>"התחלות וגמר בנייה"</em> הרבעונית,
-    הנתון הזה מגיע מהודעה אחרת של הלמ"ס — <em>"דירות בעסקאות נדל"ן"</em> — שמתפרסמת
-    <strong>מדי חודש</strong>. לכן כאן הציר הוא חודשי ולא רבעוני.
-  </p>
-
-  <div id="stockSummaryGrid" class="summary-grid"></div>
-
-  <div class="controls">
-    <span class="ctitle">טווח בגרפים:</span>
-    <button class="stockrange-btn" data-months="12">12 חודשים אחרונים</button>
-    <button class="stockrange-btn active" data-months="24">שנתיים אחרונות</button>
-    <button class="stockrange-btn" data-months="all">הכל</button>
-  </div>
-
-  <div class="chart-card">
-    <h2><span class="dot" style="background:var(--accent1)"></span>מלאי דירות חדשות שנותרו למכירה</h2>
-    <p class="desc">
-      נתונים חודשיים. הקו הכחול הוא הנתון המקורי; הקו הכתום המקווקו הוא המגמה שמפרסמת הלמ"ס,
-      שמנטרלת רעש עונתי וחד-פעמי. שניהם באותה יחידה (מספר דירות), ולכן על אותו ציר.
-    </p>
-    <div class="chart-holder"><canvas id="chart_stock"></canvas></div>
-  </div>
-
-  <div class="chart-card">
-    <h2><span class="dot" style="background:var(--accent1)"></span>חודשי היצע</h2>
-    <p class="desc">
-      כמה חודשים ייקח למכור את כל המלאי בקצב המכירות של אותו חודש. זו יחידה אחרת לגמרי
-      (חודשים, לא דירות), ולכן היא בגרף נפרד ולא על ציר שני — שני צירים באותו גרף מעוותים
-      את הקריאה.
-    </p>
-    <div class="chart-holder"><canvas id="chart_supply"></canvas></div>
-  </div>
-
-  <div class="table-section">
-    <h2>מלאי לפי יישוב — לאורך זמן</h2>
-    <p class="desc" style="margin-top:2px;">
-      דירות חדשות שנותרו למכירה בערים המונות יותר מ-100 אלף תושבים.
-      <strong>שימו לב:</strong> הלמ"ס לא מפרסמת סדרה היסטורית לפי יישוב — כל הודעה כוללת
-      תמונת מצב של חודש אחד בלבד. הסדרה כאן נבנתה מכמה הודעות, ולכן היא עדיין קצרה
-      ומתארכת בנקודה אחת בכל פרסום חדש.
-    </p>
-    <div id="cityStockGrid" class="trends-grid"></div>
-    <p class="table-caption" id="cityStockSource"></p>
-  </div>
-
-  <div class="table-section">
-    <h2>נתונים חודשיים מלאים</h2>
-    <table id="stockTable">
-      <thead>
-        <tr>
-          <th>חודש</th>
-          <th>מלאי (מקורי)</th>
-          <th>מנוכה עונתיות</th>
-          <th>מגמה</th>
-          <th>% שינוי במגמה</th>
-          <th>חודשי היצע</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p class="table-caption" id="stockSource"></p>
   </div>
 
 </div>
@@ -957,51 +886,6 @@ function buildTable(){
 }
 
 
-// ---- מלאי קבלנים: דירות חדשות שנותרו למכירה (נתון חודשי) ----
-// מקור: הלמ"ס, "דירות בעסקאות נדל"ן", לוח 2 — "דירות חדשות שנותרו למכירה וחודשי היצע".
-// זו סדרה נפרדת מהודעת "התחלות וגמר בנייה" שממנה מגיעים שאר הטאבים:
-// היא מתפרסמת חודשית (ולא רבעונית), ולכן גם התדירות כאן חודשית.
-const STOCK_DATA = {
-  source: { release: "252/2026", published: "13/08/2026", table: 'לוח 2', file: "04_26_252t2.xls" },
-  labels: ["01/24", "02/24", "03/24", "04/24", "05/24", "06/24", "07/24", "08/24", "09/24", "10/24", "11/24", "12/24", "01/25", "02/25", "03/25", "04/25", "05/25", "06/25", "07/25", "08/25", "09/25", "10/25", "11/25", "12/25", "01/26", "02/26", "03/26", "04/26", "05/26", "06/26"],
-  original: [68632, 67910, 67015, 65876, 66841, 67619, 68877, 68952, 69744, 69943, 71724, 76508, 77724, 77476, 78645, 79648, 81111, 81482, 82431, 83189, 83921, 83577, 83629, 86095, 86291, 85924, 85312, 84004, 84127, 84283],
-  sa: [66398, 65600, 67371, 67287, 67466, 68480, 68955, 69814, 69303, 70422, 72533, 74389, 75712, 77524, 78857, 80522, 81515, 82135, 83267, 83703, 84809, 85768, 84450, 83548, 83914, 85850, 84617, 83911, 84598, 84493],
-  trend: [65648, 66323, 66883, 67370, 67830, 68304, 68839, 69489, 70318, 71373, 72657, 74136, 75726, 77333, 78861, 80242, 81439, 82433, 83222, 83811, 84215, 84461, 84588, 84636, 84643, 84632, 84614, 84587, 84535, 84458],
-  pctTrend: [1.3, 1.0, 0.8, 0.7, 0.7, 0.7, 0.8, 0.9, 1.2, 1.5, 1.8, 2.0, 2.1, 2.1, 2.0, 1.8, 1.5, 1.2, 1.0, 0.7, 0.5, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0, 0.0, -0.1, -0.1],
-  monthsSupply: [19.3, 18.4, 17.8, 17.5, 17.5, 17.9, 18.5, 19.2, 20.1, 21.1, 22.1, 23.2, 24.4, 25.6, 26.8, 27.9, 28.7, 29.2, 29.5, 29.6, 29.8, 30.1, 30.3, 30.5, 30.3, 29.7, 28.8, 27.8, 26.8, 26.0]
-};
-
-
-// ---- מלאי קבלנים לפי יישוב ----
-// מקור: "תרשים 5 - דירות חדשות שנותרו למכירה בערים הגדולות המונות יותר מ-100 אלף תושבים",
-// קובץ t8.xls בכל הודעה. חשוב: כל הודעה מפרסמת **תמונת מצב של חודש אחד בלבד** —
-// אין אצל הלמ"ס סדרה היסטורית לפי יישוב. הסדרה כאן נבנתה בעצמנו מכמה הודעות,
-// ולכן היא מתארכת בנקודה אחת בכל הודעה חדשה שהרוטינה היומית קולטת.
-const CITY_STOCK = {
-  labels: ["01/26", "03/26", "05/26", "06/26"],
-  releases: ["077/2026", "147/2026", "216/2026", "252/2026"],
-  cities: [
-    { name: "ירושלים", values: [10339, 10370, 10368, 10320], pctChange: -0.2 },
-    { name: "תל אביב-יפו", values: [9650, 10544, 9811, 9549], pctChange: -1.0 },
-    { name: "בת ים", values: [5059, 4977, 5115, 5149], pctChange: 1.8 },
-    { name: "חיפה", values: [4246, 4173, 4306, 4042], pctChange: -4.8 },
-    { name: "נתניה", values: [3544, 3365, 3680, 3598], pctChange: 1.5 },
-    { name: "רמת גן", values: [2874, 2780, 3271, 3401], pctChange: 18.3 },
-    { name: "אשדוד", values: [3443, 3376, 3233, 3107], pctChange: -9.8 },
-    { name: "פתח תקווה", values: [2735, 2714, 2633, 2580], pctChange: -5.7 },
-    { name: "בית שמש", values: [2218, 1878, 2394, 2716], pctChange: 22.5 },
-    { name: "ראשון לציון", values: [1835, 1706, 1643, 1572], pctChange: -14.3 },
-    { name: "אשקלון", values: [1970, 2050, 1596, 1816], pctChange: -7.8 },
-    { name: "בני ברק", values: [1650, 1530, 1401, 1350], pctChange: -18.2 },
-    { name: "הרצלייה", values: [1192, 1457, 1400, 1516], pctChange: 27.2 },
-    { name: "רחובות", values: [1424, 1439, 1359, 1526], pctChange: 7.2 },
-    { name: "באר שבע", values: [918, 1132, 1114, 1081], pctChange: 17.8 },
-    { name: "חולון", values: [1103, 1020, 973, 962], pctChange: -12.8 },
-    { name: "חדרה", values: [495, 446, 837, 813], pctChange: 64.2 },
-    { name: "מודיעין-מכבים-רעות", values: [263, 241, 169, 134], pctChange: -49.0 }
-  ]
-};
-
 // ---- City breakdown tab ("לפי יישוב") ----
 
 const CITY_COLOR_UP = '#38d39f';
@@ -1323,202 +1207,6 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   });
 });
 
-// ---- מלאי קבלנים tab ----
-
-const STOCK_LAST = STOCK_DATA.original.length - 1;
-
-function stockPctOver(months){
-  // change in the original series over the given number of months back
-  const i = STOCK_LAST, j = STOCK_LAST - months;
-  if(j < 0) return null;
-  return (STOCK_DATA.original[i] - STOCK_DATA.original[j]) / STOCK_DATA.original[j] * 100;
-}
-
-function buildStockSummary(){
-  const grid = document.getElementById('stockSummaryGrid');
-  if(!grid) return;
-  grid.innerHTML = '';
-
-  const latest = STOCK_DATA.original[STOCK_LAST];
-  const supply = STOCK_DATA.monthsSupply[STOCK_LAST];
-  const supplyFirst = STOCK_DATA.monthsSupply[0];
-  const yoy = stockPctOver(12);
-  const sinceStart = stockPctOver(STOCK_LAST);
-
-  const cards = [
-    { label: 'מלאי דירות שנותרו למכירה · ' + STOCK_DATA.labels[STOCK_LAST],
-      value: latest.toLocaleString('he-IL'), pct: null },
-    { label: 'חודשי היצע · ' + STOCK_DATA.labels[STOCK_LAST],
-      value: supply.toFixed(1) + ' חודשים',
-      note: 'לעומת ' + supplyFirst.toFixed(1) + ' בתחילת הסדרה' },
-    { label: 'שינוי במלאי ב-12 החודשים האחרונים', value: '', pct: yoy },
-    { label: 'שינוי מאז ' + STOCK_DATA.labels[0], value: '', pct: sinceStart }
-  ];
-
-  cards.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'stat-card';
-    let sub = '';
-    if(c.pct !== null && c.pct !== undefined){
-      // arrow + sign, so direction is never carried by colour alone
-      const cls = c.pct >= 0 ? 'up' : 'down';
-      const arrow = c.pct >= 0 ? '▲' : '▼';
-      sub = '<div class="sub ' + cls + '">' + arrow + ' ' + Math.abs(c.pct).toFixed(1) + '%</div>';
-    } else if(c.note){
-      sub = '<div class="sub">' + c.note + '</div>';
-    }
-    const val = c.value ? c.value
-      : (c.pct >= 0 ? '+' : '') + c.pct.toFixed(1) + '%';
-    div.innerHTML = '<div class="label">' + c.label + '</div>'
-                  + '<div class="value">' + val + '</div>' + sub;
-    grid.appendChild(div);
-  });
-}
-
-let stockRange = 24; // months shown in the charts; the table below always shows everything
-
-function stockSlice(arr){
-  if(stockRange === 'all') return arr;
-  return arr.slice(Math.max(0, arr.length - stockRange));
-}
-
-function buildStockCharts(){
-  const el = document.getElementById('chart_stock');
-  if(!el) return;
-  const L = stockSlice(STOCK_DATA.labels);
-
-  if(charts.stock && charts.stock.destroy) charts.stock.destroy();
-  charts.stock = new Chart(el.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: L,
-      datasets: [
-        { label: 'נתונים מקוריים', data: stockSlice(STOCK_DATA.original),
-          borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.10)',
-          borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: true },
-        // dashed as well as a different hue, so the two series stay separable
-        // without relying on colour discrimination alone
-        { label: 'מגמה (הלמ"ס)', data: stockSlice(STOCK_DATA.trend),
-          borderColor: '#ffb547', borderWidth: 2, borderDash: [6, 4],
-          pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: false }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: true, labels: { color: '#93a0c2', usePointStyle: true } },
-        tooltip: { rtl: true, callbacks: {
-          label: c => ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('he-IL') + ' דירות'
-        } }
-      },
-      scales: {
-        x: { ticks: { color: '#93a0c2', autoSkip: false, maxRotation: 60, minRotation: 60,
-                      font: { size: 10 } }, grid: { display: false } },
-        y: { ticks: { color: '#93a0c2', callback: v => v.toLocaleString('he-IL') },
-             grid: { color: 'rgba(255,255,255,0.07)' } }
-      }
-    }
-  });
-
-  const el2 = document.getElementById('chart_supply');
-  if(charts.supply && charts.supply.destroy) charts.supply.destroy();
-  charts.supply = new Chart(el2.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: L,
-      datasets: [{ label: 'חודשי היצע', data: stockSlice(STOCK_DATA.monthsSupply),
-        borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,0.12)',
-        borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: 0.25, fill: true }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: { rtl: true, callbacks: {
-          label: c => ' ' + c.parsed.y.toFixed(1) + ' חודשי היצע'
-        } }
-      },
-      scales: {
-        x: { ticks: { color: '#93a0c2', autoSkip: false, maxRotation: 60, minRotation: 60,
-                      font: { size: 10 } }, grid: { display: false } },
-        y: { ticks: { color: '#93a0c2' }, grid: { color: 'rgba(255,255,255,0.07)' } }
-      }
-    }
-  });
-}
-
-function buildStockTable(){
-  const tbody = document.querySelector('#stockTable tbody');
-  if(!tbody) return;
-  tbody.innerHTML = '';
-  // same window as the charts, so the whole tab shows one consistent period
-  const first = stockRange === 'all' ? 0 : Math.max(0, STOCK_DATA.labels.length - stockRange);
-  for(let i = STOCK_LAST; i >= first; i--){
-    const p = STOCK_DATA.pctTrend[i];
-    const cls = p >= 0 ? 'pos' : 'neg';
-    const sign = p >= 0 ? '+' : '';
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>' + STOCK_DATA.labels[i] + '</td>'
-      + '<td>' + STOCK_DATA.original[i].toLocaleString('he-IL') + '</td>'
-      + '<td>' + STOCK_DATA.sa[i].toLocaleString('he-IL') + '</td>'
-      + '<td>' + STOCK_DATA.trend[i].toLocaleString('he-IL') + '</td>'
-      + '<td class="' + cls + '">' + sign + p.toFixed(1) + '%</td>'
-      + '<td>' + STOCK_DATA.monthsSupply[i].toFixed(1) + '</td>';
-    tbody.appendChild(tr);
-  }
-  const src = document.getElementById('stockSource');
-  if(src){
-    const shown = stockRange === 'all' ? 'כל החודשים' : stockRange + ' החודשים האחרונים';
-    src.textContent = 'מוצגים ' + shown + '. מקור: הלמ"ס, הודעה ' + STOCK_DATA.source.release + ' (פורסמה '
-      + STOCK_DATA.source.published + '), ' + STOCK_DATA.source.table + ' — '
-      + STOCK_DATA.source.file + '. הנתונים מתעדכנים מדי חודש.';
-  }
-}
-
-function buildCityStock(){
-  const grid = document.getElementById('cityStockGrid');
-  if(!grid) return;
-  const last = CITY_STOCK.labels.length - 1;
-  const sorted = CITY_STOCK.cities.slice().sort((a, b) => b.values[last] - a.values[last]);
-  grid.innerHTML = sorted.map(c =>
-      '<div class="trend-card">'
-    + '<div class="trend-head"><span class="trend-name">' + c.name + '</span>'
-    + trendChangeHTML(c.pctChange) + '</div>'
-    + '<div class="trend-val">' + c.values[last].toLocaleString('he-IL')
-    + ' <small>דירות</small></div>'
-    + sparkSVG(c.values, c.name)
-    + '<div class="spark-x"><span>' + CITY_STOCK.labels[0] + '</span><span>'
-    + CITY_STOCK.labels[last] + '</span></div>'
-    + '</div>').join('');
-
-  const src = document.getElementById('cityStockSource');
-  if(src){
-    src.textContent = 'נבנה מ-' + CITY_STOCK.releases.length + ' הודעות של הלמ"ס ('
-      + CITY_STOCK.releases.join(', ') + '), לוח t8 בכל אחת. אחוז השינוי הוא בין '
-      + CITY_STOCK.labels[0] + ' ל-' + CITY_STOCK.labels[last]
-      + '. מעבר עכבר על נקודה מציג את הערך המדויק.';
-  }
-}
-
-document.querySelectorAll('.stockrange-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.stockrange-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    stockRange = btn.dataset.months === 'all' ? 'all' : parseInt(btn.dataset.months);
-    buildStockCharts();
-    buildStockTable();
-  });
-});
-
-function buildStockTab(){
-  buildStockSummary();
-  buildStockCharts();
-  buildStockTable();
-  buildCityStock();
-}
-
 function populateCustomRangeSelects(){
   const fromSel = document.getElementById('customFrom');
   const toSel = document.getElementById('customTo');
@@ -1598,7 +1286,6 @@ buildCitySummary();
 buildCityChart();
 buildCityTable();
 buildCityTrends();
-buildStockTab();
 </script>
 
 </body>

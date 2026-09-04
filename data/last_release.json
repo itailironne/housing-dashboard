@@ -8,19 +8,5 @@
   },
   "next_release_announced": "2026-09-17",
   "checked_at": "2026-09-02",
-  "stock_series": {
-    "name": "דירות בעסקאות נדל\"ן",
-    "release_number": "252/2026",
-    "published": "2026-08-13",
-    "data_through": "2026-06",
-    "national_table": "04_26_252t2.xls (לוח 2, monthly, replace wholesale - CBS revises past months)",
-    "city_table": "04_26_252t8.xls (תרשים 5, ONE-MONTH snapshot, append only)",
-    "city_snapshots_collected": [
-      "2026-01 (077/2026)",
-      "2026-03 (147/2026)",
-      "2026-05 (216/2026)",
-      "2026-06 (252/2026)"
-    ],
-    "cadence": "published mid-month; city snapshot advances ~1-2 months per release"
-  }
+  "scope_note": "Dashboard is sourced ONLY from the \"התחלות וגמר בנייה\" release (owner decision, 2026-09-04). The מלאי קבלנים tab, which came from the separate \"דירות בעסקאות נדל\"ן\" release, was removed. Do not re-add data from other CBS releases without being asked."
 }
