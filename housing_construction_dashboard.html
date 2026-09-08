@@ -466,6 +466,18 @@ window.Chart = Chart;
 
   <div class="charts-grid" id="chartsGrid"></div>
 
+  <div class="chart-card">
+    <h2><span class="dot" style="background:var(--accent1)"></span>גמר בנייה — השוואת רבעונים בין שנים</h2>
+    <p class="desc">
+      אותו רבעון, שנה מול שנה: ציר ה-X הוא הרבעון בתוך השנה (Q1–Q4), וכל קו הוא שנה קלנדרית.
+      כך אפשר לראות אם רבעון מסוים חזק או חלש בכל שנה (עונתיות), ולא רק את המגמה הכללית.
+      <strong>הערה:</strong> הלמ"ס מפרסמת גמר בנייה ברמה רבעונית בלבד — אין נתון חודשי, ולכן הציר הוא רבעונים.
+    </p>
+    <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
+    <div class="chart-holder"><canvas id="chart_season"></canvas></div>
+    <p class="table-caption" id="seasonNote"></p>
+  </div>
+
   <div class="table-section">
     <h2>טבלת נתונים מלאה</h2>
     <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
@@ -1252,6 +1264,93 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   });
 });
 
+// ---- גמר בנייה: השוואת רבעונים בין שנים ----
+// Same quarter compared across years, so seasonality is visible: one line per
+// year, x = quarter of the year. Years are ordinal, but an ordered single-hue
+// ramp failed the palette validator (two steps only 14.4 apart in normal
+// vision, and the lightest read as gray), so the four dashboard accents are
+// used instead -- they clear CVD and contrast -- with a different point shape
+// per year so the lines stay separable without relying on colour.
+const SEASON_COLORS = ['#4f8cff', '#38d39f', '#ffb547', '#ff6b9d'];
+const SEASON_POINTS = ['circle', 'rect', 'triangle', 'rectRot'];
+const SEASON_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+
+function seasonYears(){
+  // every calendar year present in RAW_DATA, from 2023 on
+  const ys = new Set();
+  RAW_DATA.labels.forEach(l => {
+    const m = l.match(/^(\d{4})\s+Q[1-4]$/);
+    if(m && +m[1] >= 2023) ys.add(+m[1]);
+  });
+  return [...ys].sort();
+}
+
+function buildSeasonChart(){
+  const el = document.getElementById('chart_season');
+  if(!el) return;
+  const years = seasonYears();
+
+  const datasets = years.map((yr, i) => ({
+    label: String(yr),
+    // a quarter CBS has not published yet stays null, so the line stops
+    // instead of dropping to zero
+    data: SEASON_QUARTERS.map(q => {
+      const idx = RAW_DATA.labels.indexOf(yr + ' ' + q);
+      return idx === -1 ? null : RAW_DATA.completed.original[idx];
+    }),
+    borderColor: SEASON_COLORS[i % SEASON_COLORS.length],
+    backgroundColor: SEASON_COLORS[i % SEASON_COLORS.length],
+    pointStyle: SEASON_POINTS[i % SEASON_POINTS.length],
+    pointRadius: 5,
+    pointHoverRadius: 8,
+    borderWidth: 2,
+    tension: 0.25,
+    fill: false,
+    spanGaps: false
+  }));
+
+  if(charts.season && charts.season.destroy) charts.season.destroy();
+  charts.season = new Chart(el.getContext('2d'), {
+    type: 'line',
+    data: { labels: SEASON_QUARTERS, datasets: datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: '#93a0c2', usePointStyle: true, pointStyleWidth: 14 } },
+        tooltip: {
+          rtl: true,
+          callbacks: {
+            title: items => 'רבעון ' + items[0].label,
+            label: c => c.parsed.y === null ? null
+              : ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('he-IL') + ' דירות'
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#93a0c2' }, grid: { display: false } },
+        y: {
+          ticks: { color: '#93a0c2', callback: v => v.toLocaleString('he-IL') },
+          grid: { color: 'rgba(255,255,255,0.07)' },
+          title: { display: true, text: 'דירות שבנייתן הסתיימה', color: '#93a0c2' }
+        }
+      }
+    }
+  });
+
+  const note = document.getElementById('seasonNote');
+  if(note){
+    const missing = [];
+    years.forEach(yr => SEASON_QUARTERS.forEach(q => {
+      if(RAW_DATA.labels.indexOf(yr + ' ' + q) === -1) missing.push(yr + ' ' + q);
+    }));
+    note.textContent = missing.length
+      ? 'טרם פורסמו: ' + missing.join(', ') + ' — ולכן הקו של השנה הנוכחית נעצר באמצע.'
+      : '';
+  }
+}
+
 function populateCustomRangeSelects(){
   const fromSel = document.getElementById('customFrom');
   const toSel = document.getElementById('customTo');
@@ -1326,6 +1425,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 populateCustomRangeSelects();
 buildSummary();
 buildCharts();
+buildSeasonChart();
 buildTable();
 buildCitySummary();
 buildCityChart();
