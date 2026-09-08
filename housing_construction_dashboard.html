@@ -27,26 +27,79 @@ var define = undefined, module = undefined, exports = undefined;
 window.Chart = Chart;
 })(window);
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Assistant:wght@400;500;600;700&display=swap">
 <style>
   :root{
-    --bg:#0f1729;
-    --panel:#17213a;
-    --panel2:#1d2947;
-    --border:#2b3a5e;
-    --text:#e8ecf7;
-    --muted:#93a0c2;
-    --accent1:#4f8cff;
-    --accent2:#38d39f;
-    --accent3:#ffb547;
-    --accent4:#ff6b9d;
-    --up:#38d39f;
-    --down:#ff6b81;
+    /* Claude.com design system. Hebrew forces two substitutions, noted below. */
+    --canvas:#faf9f5;              /* warm cream page floor - the brand's defining choice */
+    --surface-soft:#f5f0e8;
+    --surface-card:#efe9de;
+    --surface-cream-strong:#e8e0d2;
+    --surface-dark:#181715;
+    --surface-dark-elevated:#252320;
+    --hairline:#e6dfd8;
+    --hairline-soft:#ebe6df;
+
+    --ink:#141413;
+    --body-strong:#252523;
+    --body:#3d3d3a;
+    --muted:#6c6a64;
+    --muted-soft:#8e8b82;
+    --on-primary:#ffffff;
+    --on-dark:#faf9f5;
+    --on-dark-soft:#a09d96;
+
+    --primary:#cc785c;             /* coral - scarce on elements, generous on callouts */
+    --primary-active:#a9583e;
+    --accent-teal:#5db8a6;
+    --accent-amber:#e8a55a;
+    --success:#5db872;
+    --warning:#d4a017;
+    --error:#c64545;
+
+    /* Chart series. Deepened from the brand tones so they clear contrast on cream:
+       validated light-mode - lightness band, chroma, CVD, normal-vision and
+       contrast all pass for this set. */
+    --series-1:#c25a3a;
+    --series-2:#3a6ea8;
+    --series-3:#b8860b;
+    --series-4:#2e7d4f;
+
+    /* legacy aliases still referenced in a few places */
+    --bg:#faf9f5;
+    --panel:#ffffff;
+    --panel2:#efe9de;
+    --border:#e6dfd8;
+    --text:#141413;
+    --accent1:#c25a3a;
+    --accent2:#2e7d4f;
+    --accent3:#b8860b;
+    --accent4:#3a6ea8;
+    --up:#2e7d4f;
+    --down:#c64545;
+
+    --r-md:8px; --r-lg:12px; --r-xl:16px; --r-pill:9999px;
   }
   *{box-sizing:border-box;}
+  /* Display face: Copernicus/Tiempos have no Hebrew, and Cormorant Garamond -
+     the documented substitute - has none either. Frank Ruhl Libre is the
+     Hebrew literary serif that carries the same editorial voice. Body face:
+     Assistant, a Hebrew humanist sans standing in for StyreneB/Inter. */
+  h1, h2, h3, .display{
+    font-family:'Frank Ruhl Libre', 'David Libre', Georgia, 'Times New Roman', serif;
+    font-weight:400;
+    letter-spacing:-0.5px;
+    color:var(--ink);
+  }
+  h1{font-size:clamp(34px,5vw,48px);line-height:1.1;letter-spacing:-1px;text-wrap:balance;}
+  h2{font-size:28px;line-height:1.2;letter-spacing:-0.3px;}
+  .value, .trend-val, .growth-badge{font-family:'Assistant','Segoe UI',Arial,sans-serif;}
   body{
     margin:0;
-    font-family:'Segoe UI', Arial, sans-serif;
-    background:linear-gradient(180deg,#0b1120,#111a2f 400px, #0f1729);
+    font-family:'Assistant', 'Segoe UI', Arial, sans-serif;
+    background:var(--canvas);
     color:var(--text);
     padding:24px 16px 60px;
   }
@@ -408,6 +461,78 @@ window.Chart = Chart;
   @media (max-width:600px){
     .chart-holder{height:230px;}
   }
+
+  /* ---------- Claude design system: component layer ---------- */
+  body{color:var(--body);background:var(--canvas);}
+  .wrap{max-width:1200px;}
+
+  a{color:var(--primary);}
+  a:hover{color:var(--primary-active);}
+
+  /* tabs: active state is a cream card, not a coloured fill */
+  .tab-btn{
+    background:transparent;color:var(--muted);border:none;border-radius:var(--r-md);
+    font-family:'Assistant','Segoe UI',Arial,sans-serif;font-size:14px;font-weight:500;padding:8px 14px;
+  }
+  .tab-btn.active{background:var(--surface-card);color:var(--ink);}
+
+  /* buttons: coral is scarce - only the selected control gets it */
+  button.range-btn, button.topn-btn, .view-btn, .stockrange-btn{
+    background:var(--canvas);color:var(--body);border:1px solid var(--hairline);
+    border-radius:var(--r-md);font-family:'Assistant','Segoe UI',Arial,sans-serif;
+    font-size:14px;font-weight:500;padding:9px 16px;
+  }
+  button.range-btn.active, button.topn-btn.active, .view-btn.active, .stockrange-btn.active{
+    background:var(--primary);color:var(--on-primary);border-color:var(--primary);
+  }
+  select{
+    background:var(--canvas);color:var(--ink);border:1px solid var(--hairline);
+    border-radius:var(--r-md);font-family:'Assistant','Segoe UI',Arial,sans-serif;padding:9px 12px;
+  }
+
+  /* cards: colour-block first, shadow rare */
+  .chart-card, .table-section, .help-card{
+    background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--r-lg);
+    box-shadow:none;padding:32px;
+  }
+  .stat-card{
+    background:var(--surface-card);border:1px solid transparent;border-radius:var(--r-lg);
+    box-shadow:none;padding:24px;
+  }
+  .stat-card .label{color:var(--muted);font-size:13px;font-weight:500;}
+  .stat-card .value{color:var(--ink);font-weight:700;}
+  .stat-card .sub.up{color:var(--success);}
+  .stat-card .sub.down{color:var(--error);}
+
+  .trend-card{background:var(--surface-card);border:1px solid transparent;border-radius:var(--r-lg);}
+  .trend-card.is-total{background:var(--surface-cream-strong);border-color:var(--primary);}
+  .trend-chg.up{color:var(--success);} .trend-chg.down{color:var(--error);}
+
+  .data-head{
+    background:var(--surface-card);border:1px solid transparent;
+    border-inline-start:3px solid var(--primary);border-radius:var(--r-lg);padding:24px 28px;
+  }
+  .src-tag{background:var(--surface-soft);border:1px solid var(--hairline);border-radius:var(--r-pill);}
+  .src-tag a{color:var(--primary);}
+  .files-list li{background:var(--surface-card);border:1px solid transparent;border-radius:var(--r-lg);}
+  .files-list a{color:var(--primary);}
+
+  /* tables: hairline rules, uppercase muted headers */
+  table th{
+    color:var(--muted);font-size:12px;font-weight:500;letter-spacing:1.5px;
+    text-transform:uppercase;border-bottom:1px solid var(--hairline);
+  }
+  table td{border-bottom:1px solid var(--hairline-soft);color:var(--body);}
+  tr.total-row{background:var(--surface-card);color:var(--ink);}
+  td.pos{color:var(--success);} td.neg{color:var(--error);}
+
+  .growth-badge{background:var(--surface-card);color:var(--ink);border-radius:var(--r-pill);}
+  .trend-tip{
+    background:var(--surface-dark);color:var(--on-dark);border:none;border-radius:var(--r-md);
+    box-shadow:0 1px 3px rgba(20,20,19,0.08);
+  }
+  .desc, .intro, .city-note, .table-caption{color:var(--muted);}
+  .ctitle{color:var(--ink);font-weight:500;}
 </style>
 </head>
 <body>
@@ -476,6 +601,18 @@ window.Chart = Chart;
     <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
     <div class="chart-holder"><canvas id="chart_season"></canvas></div>
     <p class="table-caption" id="seasonNote"></p>
+  </div>
+
+  <div class="chart-card">
+    <h2><span class="dot" style="background:var(--accent2)"></span>גמר בנייה — מנורמל לקצב שנתי</h2>
+    <p class="desc">
+      אותם נתונים, כשכל רבעון מוכפל ב-4 כדי לבטא <strong>קצב שנתי</strong>: "אילו כל השנה הייתה בקצב של הרבעון הזה,
+      כמה דירות היו נגמרות?". שימושי כדי להשוות רבעון בודד לסך שנתי באותה יחידת מידה.
+      <strong>שימו לב:</strong> זו הַשְׁלָכָה, לא נתון בפועל — רבעון חזק במיוחד ייראה גבוה מהתוצאה השנתית האמיתית.
+    </p>
+    <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_189t1.xls" download>04_26_189t1.xls</a></p>
+    <div class="chart-holder"><canvas id="chart_season_annual"></canvas></div>
+    <p class="table-caption" id="seasonNoteAnnual"></p>
   </div>
 
   <div class="table-section">
@@ -672,12 +809,18 @@ const CITY_DATA = {
   ]
 };
 
+// Chart chrome on the cream canvas. Kept as constants so the palette lives in
+// one place rather than being sprinkled through every chart config.
+const CHART_MUTED = '#6c6a64';   // --muted: axis ticks, legend text
+const CHART_GRID  = 'rgba(20,20,19,0.10)';
+const CHART_INK   = '#141413';
+
 const CATEGORIES = [
   {
     key: 'active_construction',
     title: 'דירות בבנייה פעילה',
     subtitle: 'Under active construction, end of period',
-    color: '#4f8cff',
+    color: 'var(--series-1)',
     single: true, // only has "original" series (no trend/sa)
     pctKey: 'active_pct'
   },
@@ -685,20 +828,20 @@ const CATEGORIES = [
     key: 'completed',
     title: 'דירות שגמר בנייתן',
     subtitle: 'Construction completed',
-    color: '#38d39f'
+    color: 'var(--series-4)'
   },
   {
     key: 'begun',
     title: 'דירות שהתחילה בנייתן',
     subtitle: 'Construction begun',
-    color: '#ffb547',
+    color: 'var(--series-3)',
     showSAOverlay: true // per user request: show a seasonally-adjusted line on this chart
   },
   {
     key: 'permits',
     title: 'היתרי בנייה',
     subtitle: 'Building permits',
-    color: '#ff6b9d'
+    color: 'var(--series-2)'
   }
 ];
 
@@ -815,7 +958,7 @@ function buildCharts(){
       datasets.push({
         label: 'מנוכה עונתיות (Seasonally Adjusted)',
         data: saData,
-        borderColor: '#38e1ff',
+        borderColor: '#3a6ea8',
         backgroundColor: 'transparent',
         borderDash: [2,2],
         fill: false,
@@ -832,14 +975,14 @@ function buildCharts(){
       datasets.push({
         label: 'צמיחה שנה מול שנה (%)',
         data: growth.series,
-        borderColor: '#ffffff',
+        borderColor: 'var(--canvas)',
         backgroundColor: 'transparent',
         borderDash: [6,4],
         fill: false,
         tension: 0.25,
         pointRadius: labels.length > 20 ? 0 : 3,
         pointHoverRadius: 5,
-        pointBackgroundColor: '#ffffff',
+        pointBackgroundColor: 'var(--canvas)',
         borderWidth: 1.5,
         yAxisID: 'y1',
         spanGaps: true,
@@ -871,19 +1014,19 @@ function buildCharts(){
         },
         scales: {
           x: {
-            ticks: { color: '#93a0c2', maxRotation: 60, minRotation: 0, autoSkip: true, maxTicksLimit: 12 },
-            grid: { color: 'rgba(255,255,255,0.05)' }
+            ticks: { color: CHART_MUTED, maxRotation: 60, minRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+            grid: { color: CHART_GRID }
           },
           y: {
             position: 'left',
-            ticks: { color: '#93a0c2' },
-            grid: { color: 'rgba(255,255,255,0.07)' }
+            ticks: { color: CHART_MUTED },
+            grid: { color: CHART_GRID }
           },
           y1: {
             position: 'right',
             display: showTrendLine,
             ticks: {
-              color: '#93a0c2',
+              color: CHART_MUTED,
               callback: (v) => v + '%'
             },
             grid: { drawOnChartArea: false }
@@ -942,9 +1085,9 @@ function buildTable(){
 
 // ---- City breakdown tab ("לפי יישוב") ----
 
-const CITY_COLOR_UP = '#38d39f';
-const CITY_COLOR_DOWN = '#ff6b81';
-const CITY_COLOR_NEUTRAL = '#93a0c2';
+const CITY_COLOR_UP = '#2e7d4f';
+const CITY_COLOR_DOWN = '#c64545';
+const CITY_COLOR_NEUTRAL = CHART_MUTED;
 const LATEST_YEAR_IDX = CITY_DATA.years.length - 1;
 
 function citiesByLatestValue(){
@@ -1044,11 +1187,11 @@ function buildCityChart(){
       },
       scales: {
         x: {
-          ticks: { color: '#93a0c2' },
-          grid: { color: 'rgba(255,255,255,0.07)' }
+          ticks: { color: CHART_MUTED },
+          grid: { color: CHART_GRID }
         },
         y: {
-          ticks: { color: '#93a0c2' },
+          ticks: { color: CHART_MUTED },
           grid: { display: false }
         }
       }
@@ -1177,7 +1320,7 @@ function sparkSVG(values, name){
     if(seg.length === 1){
       out += '<circle cx="' + seg[0][0].toFixed(1) + '" cy="' + seg[0][1].toFixed(1) + '" r="2" class="sp-dot"/>';
     } else {
-      out += '<polyline fill="none" stroke="#4f8cff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'
+      out += '<polyline fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'
            + seg.map(pt => pt[0].toFixed(1) + ',' + pt[1].toFixed(1)).join(' ') + '"/>';
     }
   });
@@ -1271,7 +1414,7 @@ document.querySelectorAll('.view-btn').forEach(btn => {
 // vision, and the lightest read as gray), so the four dashboard accents are
 // used instead -- they clear CVD and contrast -- with a different point shape
 // per year so the lines stay separable without relying on colour.
-const SEASON_COLORS = ['#4f8cff', '#38d39f', '#ffb547', '#ff6b9d'];
+const SEASON_COLORS = ['#c25a3a', '#3a6ea8', '#b8860b', '#2e7d4f'];
 const SEASON_POINTS = ['circle', 'rect', 'triangle', 'rectRot'];
 const SEASON_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
 
@@ -1285,8 +1428,8 @@ function seasonYears(){
   return [...ys].sort();
 }
 
-function buildSeasonChart(){
-  const el = document.getElementById('chart_season');
+function buildSeasonChart(canvasId, factor, noteId, yTitle){
+  const el = document.getElementById(canvasId);
   if(!el) return;
   const years = seasonYears();
 
@@ -1296,7 +1439,7 @@ function buildSeasonChart(){
     // instead of dropping to zero
     data: SEASON_QUARTERS.map(q => {
       const idx = RAW_DATA.labels.indexOf(yr + ' ' + q);
-      return idx === -1 ? null : RAW_DATA.completed.original[idx];
+      return idx === -1 ? null : RAW_DATA.completed.original[idx] * factor;
     }),
     borderColor: SEASON_COLORS[i % SEASON_COLORS.length],
     backgroundColor: SEASON_COLORS[i % SEASON_COLORS.length],
@@ -1309,8 +1452,8 @@ function buildSeasonChart(){
     spanGaps: false
   }));
 
-  if(charts.season && charts.season.destroy) charts.season.destroy();
-  charts.season = new Chart(el.getContext('2d'), {
+  if(charts[canvasId] && charts[canvasId].destroy) charts[canvasId].destroy();
+  charts[canvasId] = new Chart(el.getContext('2d'), {
     type: 'line',
     data: { labels: SEASON_QUARTERS, datasets: datasets },
     options: {
@@ -1318,7 +1461,7 @@ function buildSeasonChart(){
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: true, labels: { color: '#93a0c2', usePointStyle: true, pointStyleWidth: 14 } },
+        legend: { display: true, labels: { color: CHART_MUTED, usePointStyle: true, pointStyleWidth: 14 } },
         tooltip: {
           rtl: true,
           callbacks: {
@@ -1329,17 +1472,17 @@ function buildSeasonChart(){
         }
       },
       scales: {
-        x: { ticks: { color: '#93a0c2' }, grid: { display: false } },
+        x: { ticks: { color: CHART_MUTED }, grid: { display: false } },
         y: {
-          ticks: { color: '#93a0c2', callback: v => v.toLocaleString('he-IL') },
-          grid: { color: 'rgba(255,255,255,0.07)' },
-          title: { display: true, text: 'דירות שבנייתן הסתיימה', color: '#93a0c2' }
+          ticks: { color: CHART_MUTED, callback: v => v.toLocaleString('he-IL') },
+          grid: { color: CHART_GRID },
+          title: { display: true, text: yTitle, color: CHART_MUTED }
         }
       }
     }
   });
 
-  const note = document.getElementById('seasonNote');
+  const note = document.getElementById(noteId);
   if(note){
     const missing = [];
     years.forEach(yr => SEASON_QUARTERS.forEach(q => {
@@ -1425,7 +1568,8 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 populateCustomRangeSelects();
 buildSummary();
 buildCharts();
-buildSeasonChart();
+buildSeasonChart('chart_season', 1, 'seasonNote', 'דירות שבנייתן הסתיימה');
+buildSeasonChart('chart_season_annual', 4, 'seasonNoteAnnual', 'קצב שנתי — דירות (רבעון × 4)');
 buildTable();
 buildCitySummary();
 buildCityChart();
