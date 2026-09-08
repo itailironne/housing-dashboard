@@ -319,7 +319,7 @@ window.Chart = Chart;
   .spark-x{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);
            margin-top:1px;direction:ltr;}
   .sp-hit{fill:transparent;cursor:pointer;}
-  .sp-dot{fill:var(--accent1);}
+  .sp-dot{fill:#c25a3a;}
   .trend-tip{position:fixed;pointer-events:none;background:#0b1120;border:1px solid var(--border);
              border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);z-index:99;
              box-shadow:0 6px 18px rgba(0,0,0,.45);line-height:1.5;}
@@ -820,7 +820,7 @@ const CATEGORIES = [
     key: 'active_construction',
     title: 'דירות בבנייה פעילה',
     subtitle: 'Under active construction, end of period',
-    color: 'var(--series-1)',
+    color: '#c25a3a',
     single: true, // only has "original" series (no trend/sa)
     pctKey: 'active_pct'
   },
@@ -828,20 +828,20 @@ const CATEGORIES = [
     key: 'completed',
     title: 'דירות שגמר בנייתן',
     subtitle: 'Construction completed',
-    color: 'var(--series-4)'
+    color: '#2e7d4f'
   },
   {
     key: 'begun',
     title: 'דירות שהתחילה בנייתן',
     subtitle: 'Construction begun',
-    color: 'var(--series-3)',
+    color: '#b8860b',
     showSAOverlay: true // per user request: show a seasonally-adjusted line on this chart
   },
   {
     key: 'permits',
     title: 'היתרי בנייה',
     subtitle: 'Building permits',
-    color: 'var(--series-2)'
+    color: '#3a6ea8'
   }
 ];
 
@@ -975,14 +975,14 @@ function buildCharts(){
       datasets.push({
         label: 'צמיחה שנה מול שנה (%)',
         data: growth.series,
-        borderColor: 'var(--canvas)',
+        borderColor: '#faf9f5',
         backgroundColor: 'transparent',
         borderDash: [6,4],
         fill: false,
         tension: 0.25,
         pointRadius: labels.length > 20 ? 0 : 3,
         pointHoverRadius: 5,
-        pointBackgroundColor: 'var(--canvas)',
+        pointBackgroundColor: '#faf9f5',
         borderWidth: 1.5,
         yAxisID: 'y1',
         spanGaps: true,
@@ -1320,7 +1320,7 @@ function sparkSVG(values, name){
     if(seg.length === 1){
       out += '<circle cx="' + seg[0][0].toFixed(1) + '" cy="' + seg[0][1].toFixed(1) + '" r="2" class="sp-dot"/>';
     } else {
-      out += '<polyline fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'
+      out += '<polyline fill="none" stroke="#c25a3a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'
            + seg.map(pt => pt[0].toFixed(1) + ',' + pt[1].toFixed(1)).join(' ') + '"/>';
     }
   });
