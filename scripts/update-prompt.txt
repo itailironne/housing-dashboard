@@ -36,6 +36,30 @@ This run is fully unattended (no one will see prompts or answer questions) — n
    h. Commit all changed files — including the newly downloaded `.xls`/`.pdf` source files from step 5a, which are new untracked files and need an explicit `git add` (e.g. "Auto-update: CBS release {number} ({date})") — and push to `main`.
 6. Failure path (unreachable/undiscoverable source, unparseable table, or validation mismatch in 5c): do NOT modify housing_construction_dashboard.html or data/last_release.json. Create/update `STATUS.md` at repo root describing exactly what was tried and what failed (search queries used, candidate URLs tried, any errors) so the owner can investigate manually. Commit and push just that file ("Auto-update check failed: see STATUS.md").
 
+## Verified facts as of release 297/2026 (2026-09-17) — these override older wording above
+
+### CBS switched the tables from .xls to .xlsx
+From release 297/2026 on, t1–t7 are published as `04_{yy}_{n}t1.xlsx` … `t7.xlsx`, NOT `.xls`. Everywhere above that says `.xls`, try `.xlsx` first and fall back to `.xls` only if the `.xlsx` is a soft-404 (~2 KB). Remember a missing file still returns HTTP 200 on cbs.gov.il, so a `.xls` request against a new release looks "successful" but is a 2 KB error page — check SIZE. Read `.xlsx` with `openpyxl` (`xlrd` 2.x cannot open it); older archived `.xls` files still need `xlrd`.
+
+### Exact column layout of t1 (openpyxl, 1-indexed; verified on 04_26_297t1.xlsx)
+| col | meaning |
+|---|---|
+| 1 | active construction: % change vs previous quarter |
+| 2 | active construction (original) |
+| 3 / 4 / 5 / 6 | construction completed: trend % change / trend / seasonally adjusted / original |
+| 7 / 8 / 9 / 10 | construction begun: trend % change / trend / SA / original |
+| 11 / 12 / 13 / 14 | permits: trend % change / trend / SA / original |
+| 16 | quarter as months: `1-3` `4-6` `7-9` `10-12` |
+| 17 | `*` on the FIRST provisional quarter only |
+| 18 | year — only on Q1 rows, carry it forward |
+All 476 values of RAW_DATA were diffed against this layout on 2026-09-17 with zero differences, so it is a reliable mapping.
+
+### Maintain `RAW_DATA.provisional`
+RAW_DATA now carries a `provisional` array (e.g. `["2026 Q1", "2026 Q2"]`). The page draws those quarters dashed and stars them in the table. Rebuild it every run from column 17: the quarter carrying `*` and every quarter after it. CBS footnote 1 also warns that the last three quarters of active construction and construction begun "may change substantially". If you replace RAW_DATA wholesale, include this key — the page tolerates its absence, but then silently stops flagging provisional figures.
+
+### Luach A can print a wrong sign — check the national total
+In release 297/2026 the PDF's Luach A printed the national total's change as `7.0` with no minus sign. It is a genuine CBS typo, not an extraction artifact: the same pdfplumber extraction kept the minus on every declining locality (ירושלים −30.1, לוד −31.1, נתיבות −1.3) and dropped it only on that row. Three independent sources agreed it was a decline: the narrative ("ירידה של 7.0%"), the row's own values (81,760 → 76,040), and the sum of the four matching quarters in t1 (81,759 → 76,042). Each run, recompute every pctChange from its values; where the printed sign disagrees, only correct it when at least two independent sources agree, and say so in the commit message.
+
 ## Ground rules
 - Never invent or estimate data — if a number can't be verified against the source, leave it out and fail loudly via STATUS.md instead.
 - Keep the dashboard a single self-contained HTML file.
