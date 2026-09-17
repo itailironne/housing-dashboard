@@ -534,6 +534,9 @@ window.Chart = Chart;
   .desc, .intro, .city-note, .table-caption{color:var(--muted);}
   .ctitle{color:var(--ink);font-weight:500;}
   .prov-mark{color:var(--primary);font-weight:700;cursor:help;}
+  .rate-note{margin:0 0 8px;font-size:0.8rem;line-height:1.5;color:var(--body);
+             background:var(--surface-soft);border-inline-start:3px solid var(--primary);
+             border-radius:6px;padding:6px 10px;}
 </style>
 </head>
 <body>
@@ -590,6 +593,10 @@ window.Chart = Chart;
     <label style="display:flex;align-items:center;gap:6px;margin-right:16px;cursor:pointer;font-size:0.88rem;color:var(--muted);">
       <input type="checkbox" id="trendToggle" checked style="accent-color:var(--accent1);width:16px;height:16px;cursor:pointer;">
       הצג קו צמיחה (שנה מול שנה)
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;margin-right:16px;cursor:pointer;font-size:0.88rem;color:var(--muted);">
+      <input type="checkbox" id="annualToggle" style="accent-color:var(--primary);width:16px;height:16px;cursor:pointer;">
+      הצג כקצב שנתי (רבעון × 4)
     </label>
   </div>
 
@@ -818,6 +825,16 @@ const CITY_DATA = {
 const CHART_MUTED = '#6c6a64';   // --muted: axis ticks, legend text
 const CHART_GRID  = 'rgba(20,20,19,0.10)';
 const CHART_INK   = '#141413';
+// Lines drawn on top of a series. The dataset and its legend swatch both read
+// these, so a line and its key cannot drift apart again.
+const GROWTH_LINE = '#252523';   // year-over-year %, dashed: dark ink, neutral, ~15:1 on cream
+const SA_LINE     = '#3a6ea8';   // seasonally-adjusted overlay
+// Quarterly FLOWS become an annual run-rate when multiplied by 4. Active
+// construction is a STOCK (dwellings under construction at a point in time),
+// so multiplying it by 4 would be meaningless -- it is never scaled.
+const ANNUAL_FACTOR = 4;
+let annualRate = false;
+function rateFactor(cat){ return (annualRate && !cat.single) ? ANNUAL_FACTOR : 1; }
 
 // CBS marks the latest quarters "*  נתונים ארעיים" and warns that the last three
 // quarters may change substantially. Those are the points readers look at most,
@@ -910,10 +927,10 @@ function buildSummary(){
 function legendHtml(cat){
   const items = [`<span class="mini-legend-item"><span class="mini-dot" style="border-color:${cat.color}"></span>נתונים</span>`];
   if(cat.showSAOverlay && !cat.single && currentSeries !== 'sa'){
-    items.push(`<span class="mini-legend-item"><span class="mini-dot dashed" style="border-color:#38e1ff"></span>מנוכה עונתיות</span>`);
+    items.push(`<span class="mini-legend-item"><span class="mini-dot dashed" style="border-color:${SA_LINE}"></span>מנוכה עונתיות</span>`);
   }
   if(showTrendLine){
-    items.push(`<span class="mini-legend-item"><span class="mini-dot dashed" style="border-color:#ffffff"></span>צמיחה שנה מול שנה (%)</span>`);
+    items.push(`<span class="mini-legend-item"><span class="mini-dot dashed" style="border-color:${GROWTH_LINE}"></span>צמיחה שנה מול שנה (%)</span>`);
   }
   return items.length > 1 ? `<div class="mini-legend">${items.join('')}</div>` : '';
 }
@@ -930,6 +947,9 @@ function buildCharts(){
         <span id="growth_${cat.key}" class="growth-badge"></span>
       </h2>
       <p class="desc">${cat.subtitle}</p>
+      ${annualRate ? (cat.single
+        ? '<p class="rate-note">לא מוכפל ב-4: זהו <strong>מלאי</strong> (דירות בבנייה בסוף הרבעון), לא זרם רבעוני — הכפלה הייתה יוצרת מספר חסר משמעות.</p>'
+        : '<p class="rate-note">מוצג כ<strong>קצב שנתי</strong>: כל רבעון × 4. זו הַשְׁלָכָה, לא נתון שנתי בפועל.</p>') : ''}
       <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_297t1.xlsx" download>04_26_297t1.xlsx</a></p>
       ${legendHtml(cat)}
       <div class="chart-holder"><canvas id="chart_${cat.key}"></canvas></div>
@@ -941,7 +961,9 @@ function buildCharts(){
     const ctx = document.getElementById(`chart_${cat.key}`).getContext('2d');
     const labels = sliceData(RAW_DATA.labels, currentRangeStart, currentRangeEnd);
     const fullSeries = getSeriesData(cat);
-    const data = sliceData(fullSeries, currentRangeStart, currentRangeEnd);
+    const factor = rateFactor(cat);
+    // growth is computed on the unscaled series: a year-over-year % is identical either way
+    const data = sliceData(fullSeries, currentRangeStart, currentRangeEnd).map(v => v == null ? v : v * factor);
     const growthFull = computeYoYGrowth(fullSeries);
     const growthSeries = sliceData(growthFull, currentRangeStart, currentRangeEnd);
     const lastGrowthVal = growthSeries.slice().reverse().find(v => v !== null && v !== undefined);
@@ -965,11 +987,11 @@ function buildCharts(){
     // Optional seasonally-adjusted overlay (only makes sense when it's not already
     // the series being shown, and only for categories that have SA data at all).
     if(cat.showSAOverlay && !cat.single && currentSeries !== 'sa'){
-      const saData = sliceData(RAW_DATA[cat.key].sa, currentRangeStart, currentRangeEnd);
+      const saData = sliceData(RAW_DATA[cat.key].sa, currentRangeStart, currentRangeEnd).map(v => v == null ? v : v * factor);
       datasets.push({
         label: 'מנוכה עונתיות (Seasonally Adjusted)',
         data: saData,
-        borderColor: '#3a6ea8',
+        borderColor: SA_LINE,
         backgroundColor: 'transparent',
         borderDash: [2,2],
         fill: false,
@@ -986,14 +1008,14 @@ function buildCharts(){
       datasets.push({
         label: 'צמיחה שנה מול שנה (%)',
         data: growth.series,
-        borderColor: '#faf9f5',
+        borderColor: GROWTH_LINE,
         backgroundColor: 'transparent',
         borderDash: [6,4],
         fill: false,
         tension: 0.25,
         pointRadius: labels.length > 20 ? 0 : 3,
         pointHoverRadius: 5,
-        pointBackgroundColor: '#faf9f5',
+        pointBackgroundColor: GROWTH_LINE,
         borderWidth: 1.5,
         yAxisID: 'y1',
         spanGaps: true,
@@ -1018,7 +1040,7 @@ function buildCharts(){
                   return c.parsed.y === null ? ' צמיחה שנתית: אין נתון (פחות מ-4 רבעונים היסטוריה)' : ` צמיחה שנה מול שנה: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(1)}%`;
                 }
                 const prefix = c.datasetIndex === 0 ? '' : `${c.dataset.label}: `;
-                return ` ${prefix}${c.parsed.y.toLocaleString('he-IL')} דירות`;
+                return ` ${prefix}${c.parsed.y.toLocaleString('he-IL')} דירות${factor === ANNUAL_FACTOR ? ' (קצב שנתי)' : ''}`;
               }
             }
           }
@@ -1030,8 +1052,13 @@ function buildCharts(){
           },
           y: {
             position: 'left',
-            ticks: { color: CHART_MUTED },
-            grid: { color: CHART_GRID }
+            ticks: { color: CHART_MUTED, callback: v => Number(v).toLocaleString('he-IL') },
+            grid: { color: CHART_GRID },
+            title: {
+              display: true, color: CHART_MUTED,
+              text: cat.single ? 'דירות (מלאי בסוף רבעון)'
+                  : (factor === ANNUAL_FACTOR ? 'קצב שנתי — דירות (רבעון × 4)' : 'דירות ברבעון')
+            }
           },
           y1: {
             position: 'right',
@@ -1527,6 +1554,11 @@ document.getElementById('seriesSelect').addEventListener('change', (e)=>{
 
 document.getElementById('trendToggle').addEventListener('change', (e)=>{
   showTrendLine = e.target.checked;
+  updateCharts();
+});
+
+document.getElementById('annualToggle').addEventListener('change', (e)=>{
+  annualRate = e.target.checked;
   updateCharts();
 });
 
