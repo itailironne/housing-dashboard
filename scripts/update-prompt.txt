@@ -54,6 +54,9 @@ From release 297/2026 on, t1–t7 are published as `04_{yy}_{n}t1.xlsx` … `t7.
 | 18 | year — only on Q1 rows, carry it forward |
 All 476 values of RAW_DATA were diffed against this layout on 2026-09-17 with zero differences, so it is a reliable mapping.
 
+### Filename references in the page
+The table-1 filename appears as the JS constant `T1_FILE` (used by the quarter-by-year charts) as well as in literal links and source badges. When the release changes, update every occurrence -- a search for the old filename (e.g. `04_26_297t1`) finds them all -- and confirm afterwards that no link points at a file missing from the repo.
+
 ### Maintain `RAW_DATA.provisional`
 RAW_DATA now carries a `provisional` array (e.g. `["2026 Q1", "2026 Q2"]`). The page draws those quarters dashed and stars them in the table. Rebuild it every run from column 17: the quarter carrying `*` and every quarter after it. CBS footnote 1 also warns that the last three quarters of active construction and construction begun "may change substantially". If you replace RAW_DATA wholesale, include this key — the page tolerates its absence, but then silently stops flagging provisional figures.
 

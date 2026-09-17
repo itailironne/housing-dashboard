@@ -534,6 +534,8 @@ window.Chart = Chart;
   .desc, .intro, .city-note, .table-caption{color:var(--muted);}
   .ctitle{color:var(--ink);font-weight:500;}
   .prov-mark{color:var(--primary);font-weight:700;cursor:help;}
+  .season-head{margin:40px 0 4px;}
+  .season-head h2{margin:0 0 6px;}
   .rate-note{margin:0 0 8px;font-size:0.8rem;line-height:1.5;color:var(--body);
              background:var(--surface-soft);border-inline-start:3px solid var(--primary);
              border-radius:6px;padding:6px 10px;}
@@ -602,29 +604,15 @@ window.Chart = Chart;
 
   <div class="charts-grid" id="chartsGrid"></div>
 
-  <div class="chart-card">
-    <h2><span class="dot" style="background:var(--accent1)"></span>גמר בנייה — השוואת רבעונים בין שנים</h2>
+  <div class="season-head">
+    <h2>השוואת רבעונים בין שנים</h2>
     <p class="desc">
       אותו רבעון, שנה מול שנה: ציר ה-X הוא הרבעון בתוך השנה (Q1–Q4), וכל קו הוא שנה קלנדרית.
-      כך אפשר לראות אם רבעון מסוים חזק או חלש בכל שנה (עונתיות), ולא רק את המגמה הכללית.
-      <strong>הערה:</strong> הלמ"ס מפרסמת גמר בנייה ברמה רבעונית בלבד — אין נתון חודשי, ולכן הציר הוא רבעונים.
+      כך רואים אם רבעון מסוים חזק או חלש באופן קבוע (עונתיות), ולא רק את המגמה הכללית.
+      הגרפים פועלים לפי אותו מתג "קצב שנתי" שלמעלה. הלמ"ס מפרסמת את הנתונים ברמה רבעונית בלבד — אין נתון חודשי.
     </p>
-    <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_297t1.xlsx" download>04_26_297t1.xlsx</a></p>
-    <div class="chart-holder"><canvas id="chart_season"></canvas></div>
-    <p class="table-caption" id="seasonNote"></p>
   </div>
-
-  <div class="chart-card">
-    <h2><span class="dot" style="background:var(--accent2)"></span>גמר בנייה — מנורמל לקצב שנתי</h2>
-    <p class="desc">
-      אותם נתונים, כשכל רבעון מוכפל ב-4 כדי לבטא <strong>קצב שנתי</strong>: "אילו כל השנה הייתה בקצב של הרבעון הזה,
-      כמה דירות היו נגמרות?". שימושי כדי להשוות רבעון בודד לסך שנתי באותה יחידת מידה.
-      <strong>שימו לב:</strong> זו הַשְׁלָכָה, לא נתון בפועל — רבעון חזק במיוחד ייראה גבוה מהתוצאה השנתית האמיתית.
-    </p>
-    <p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · <a href="04_26_297t1.xlsx" download>04_26_297t1.xlsx</a></p>
-    <div class="chart-holder"><canvas id="chart_season_annual"></canvas></div>
-    <p class="table-caption" id="seasonNoteAnnual"></p>
-  </div>
+  <div class="charts-grid" id="seasonGrid"></div>
 
   <div class="table-section">
     <h2>טבלת נתונים מלאה</h2>
@@ -1437,94 +1425,127 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   });
 });
 
-// ---- גמר בנייה: השוואת רבעונים בין שנים ----
-// Same quarter compared across years, so seasonality is visible: one line per
-// year, x = quarter of the year. Years are ordinal, but an ordered single-hue
-// ramp failed the palette validator (two steps only 14.4 apart in normal
-// vision, and the lightest read as gray), so the four dashboard accents are
-// used instead -- they clear CVD and contrast -- with a different point shape
+const T1_FILE = '04_26_297t1.xlsx';   // table-1 source file, shared by every chart that cites it
+
+// ---- השוואת רבעונים בין שנים: one chart per stage ----
+// Same quarter compared across years, so seasonality is visible: x = quarter of
+// the year, one line per calendar year. Years are ordinal, but an ordered
+// single-hue ramp failed the palette validator (adjacent steps 14.4 apart in
+// normal vision, the lightest reading as gray), so the four series colours are
+// used instead -- they clear CVD and contrast -- with a distinct point shape
 // per year so the lines stay separable without relying on colour.
+// Every chart follows the same annual-rate toggle as the stage charts above;
+// active construction is a stock and is never scaled (see rateFactor).
 const SEASON_COLORS = ['#c25a3a', '#3a6ea8', '#b8860b', '#2e7d4f'];
 const SEASON_POINTS = ['circle', 'rect', 'triangle', 'rectRot'];
 const SEASON_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4'];
+const SEASON_FROM_YEAR = 2023;
 
 function seasonYears(){
-  // every calendar year present in RAW_DATA, from 2023 on
   const ys = new Set();
   RAW_DATA.labels.forEach(l => {
     const m = l.match(/^(\d{4})\s+Q[1-4]$/);
-    if(m && +m[1] >= 2023) ys.add(+m[1]);
+    if(m && +m[1] >= SEASON_FROM_YEAR) ys.add(+m[1]);
   });
   return [...ys].sort();
 }
 
-function buildSeasonChart(canvasId, factor, noteId, yTitle){
-  const el = document.getElementById(canvasId);
-  if(!el) return;
+function seasonSeries(cat){
+  return cat.single ? RAW_DATA.active_construction : RAW_DATA[cat.key].original;
+}
+
+function seasonNoteText(cat, years){
+  const missing = [];
+  years.forEach(yr => SEASON_QUARTERS.forEach(q => {
+    if(RAW_DATA.labels.indexOf(yr + ' ' + q) === -1) missing.push(yr + ' ' + q);
+  }));
+  const prov = (RAW_DATA.provisional || []).filter(l => years.some(y => l.indexOf(String(y)) === 0));
+  const parts = [];
+  if(missing.length) parts.push('טרם פורסמו: ' + missing.join(', ') + ' — ולכן הקו של השנה הנוכחית נעצר באמצע.');
+  if(prov.length) parts.push('נתונים ארעיים (קו מקווקו): ' + prov.join(', ') + ' — עשויים להשתנות במידה ניכרת.');
+  return parts.join(' ');
+}
+
+function buildSeasonCharts(){
+  const grid = document.getElementById('seasonGrid');
+  if(!grid) return;
   const years = seasonYears();
 
-  const datasets = years.map((yr, i) => ({
-    label: String(yr),
-    // a quarter CBS has not published yet stays null, so the line stops
-    // instead of dropping to zero
-    data: SEASON_QUARTERS.map(q => {
-      const idx = RAW_DATA.labels.indexOf(yr + ' ' + q);
-      return idx === -1 ? null : RAW_DATA.completed.original[idx] * factor;
-    }),
-    borderColor: SEASON_COLORS[i % SEASON_COLORS.length],
-    backgroundColor: SEASON_COLORS[i % SEASON_COLORS.length],
-    pointStyle: SEASON_POINTS[i % SEASON_POINTS.length],
-    pointRadius: 5,
-    pointHoverRadius: 8,
-    borderWidth: 2,
-    tension: 0.25,
-    fill: false,
-    spanGaps: false,
-    segment: { borderDash: ctx => isProvisional(yr + ' ' + SEASON_QUARTERS[ctx.p1DataIndex]) ? PROVISIONAL_DASH : undefined }
-  }));
+  CATEGORIES.forEach(cat => {
+    const id = 'season_' + cat.key;
+    if(charts[id] && charts[id].destroy) charts[id].destroy();
+  });
+  grid.innerHTML = '';
 
-  if(charts[canvasId] && charts[canvasId].destroy) charts[canvasId].destroy();
-  charts[canvasId] = new Chart(el.getContext('2d'), {
-    type: 'line',
-    data: { labels: SEASON_QUARTERS, datasets: datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: true, labels: { color: CHART_MUTED, usePointStyle: true, pointStyleWidth: 14 } },
-        tooltip: {
-          rtl: true,
-          callbacks: {
-            title: items => 'רבעון ' + items[0].label,
-            label: c => c.parsed.y === null ? null
-              : ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('he-IL') + ' דירות'
+  CATEGORIES.forEach(cat => {
+    const id = 'season_' + cat.key;
+    const factor = rateFactor(cat);
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    const unit = cat.single ? 'דירות בבנייה (מלאי בסוף רבעון)'
+               : (factor === ANNUAL_FACTOR ? 'קצב שנתי — דירות (רבעון × 4)' : 'דירות ברבעון');
+    card.innerHTML =
+        '<h2><span class="dot" style="background:' + cat.color + '"></span>' + cat.title + ' — רבעון מול רבעון, לפי שנה</h2>'
+      + (annualRate ? (cat.single
+          ? '<p class="rate-note">לא מוכפל ב-4: זהו <strong>מלאי</strong>, לא זרם רבעוני.</p>'
+          : '<p class="rate-note">מוצג כ<strong>קצב שנתי</strong>: כל רבעון × 4. זו הַשְׁלָכָה, לא נתון שנתי בפועל.</p>') : '')
+      + '<p class="src-tag">📄 <span class="lbl">לוח 1</span> — דירות לפי שלב בנייה · '
+      + '<a href="' + T1_FILE + '" download>' + T1_FILE + '</a></p>'
+      + '<div class="chart-holder"><canvas id="chart_' + id + '"></canvas></div>'
+      + '<p class="table-caption">' + seasonNoteText(cat, years) + '</p>';
+    grid.appendChild(card);
+
+    const series = seasonSeries(cat);
+    const datasets = years.map((yr, i) => ({
+      label: String(yr),
+      // a quarter not yet published stays null, so the line stops rather than dropping to zero
+      data: SEASON_QUARTERS.map(q => {
+        const idx = RAW_DATA.labels.indexOf(yr + ' ' + q);
+        return idx === -1 || series[idx] == null ? null : series[idx] * factor;
+      }),
+      borderColor: SEASON_COLORS[i % SEASON_COLORS.length],
+      backgroundColor: SEASON_COLORS[i % SEASON_COLORS.length],
+      pointStyle: SEASON_POINTS[i % SEASON_POINTS.length],
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      borderWidth: 2,
+      tension: 0.25,
+      fill: false,
+      spanGaps: false,
+      segment: { borderDash: ctx => isProvisional(yr + ' ' + SEASON_QUARTERS[ctx.p1DataIndex]) ? PROVISIONAL_DASH : undefined }
+    }));
+
+    charts[id] = new Chart(document.getElementById('chart_' + id).getContext('2d'), {
+      type: 'line',
+      data: { labels: SEASON_QUARTERS, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: true, labels: { color: CHART_MUTED, usePointStyle: true, pointStyleWidth: 14 } },
+          tooltip: {
+            rtl: true,
+            callbacks: {
+              title: items => 'רבעון ' + items[0].label,
+              label: c => c.parsed.y === null ? null
+                : ' ' + c.dataset.label + ': ' + c.parsed.y.toLocaleString('he-IL') + ' דירות'
+                  + (factor === ANNUAL_FACTOR ? ' (קצב שנתי)' : '')
+                  + (isProvisional(c.dataset.label + ' ' + c.label) ? ' — ארעי' : '')
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: CHART_MUTED }, grid: { display: false } },
+          y: {
+            ticks: { color: CHART_MUTED, callback: v => Number(v).toLocaleString('he-IL') },
+            grid: { color: CHART_GRID },
+            title: { display: true, text: unit, color: CHART_MUTED }
           }
         }
-      },
-      scales: {
-        x: { ticks: { color: CHART_MUTED }, grid: { display: false } },
-        y: {
-          ticks: { color: CHART_MUTED, callback: v => v.toLocaleString('he-IL') },
-          grid: { color: CHART_GRID },
-          title: { display: true, text: yTitle, color: CHART_MUTED }
-        }
       }
-    }
+    });
   });
-
-  const note = document.getElementById(noteId);
-  if(note){
-    const missing = [];
-    years.forEach(yr => SEASON_QUARTERS.forEach(q => {
-      if(RAW_DATA.labels.indexOf(yr + ' ' + q) === -1) missing.push(yr + ' ' + q);
-    }));
-    const prov = (RAW_DATA.provisional || []).filter(l => years.some(y => l.indexOf(String(y)) === 0));
-    const parts = [];
-    if(missing.length) parts.push('טרם פורסמו: ' + missing.join(', ') + ' — ולכן הקו של השנה הנוכחית נעצר באמצע.');
-    if(prov.length) parts.push('נתונים ארעיים (קו מקווקו): ' + prov.join(', ') + ' — עשויים להשתנות במידה ניכרת בפרסומים הבאים.');
-    note.textContent = parts.join(' ');
-  }
 }
 
 function populateCustomRangeSelects(){
@@ -1560,6 +1581,7 @@ document.getElementById('trendToggle').addEventListener('change', (e)=>{
 document.getElementById('annualToggle').addEventListener('change', (e)=>{
   annualRate = e.target.checked;
   updateCharts();
+  buildSeasonCharts();
 });
 
 document.querySelectorAll('.range-btn').forEach(btn=>{
@@ -1606,8 +1628,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 populateCustomRangeSelects();
 buildSummary();
 buildCharts();
-buildSeasonChart('chart_season', 1, 'seasonNote', 'דירות שבנייתן הסתיימה');
-buildSeasonChart('chart_season_annual', 4, 'seasonNoteAnnual', 'קצב שנתי — דירות (רבעון × 4)');
+buildSeasonCharts();
 buildTable();
 buildCitySummary();
 buildCityChart();
